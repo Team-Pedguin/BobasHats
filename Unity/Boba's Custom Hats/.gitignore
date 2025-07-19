@@ -1,0 +1,17 @@
+.utmp/
+.vs/
+
+/[Ll]ogs/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uilds?/
+/[Aa]sset[Bb]undles/
+/[Uu]ser[Ss]ettings/
+/[Mm]emory[Cc]aptures/
+/[Rr]ecordings/
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+*.log
+*.user
+*.suo
+*.tmp

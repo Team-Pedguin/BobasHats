@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <LangVersion>13</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RestoreAdditionalProjectSources>
+            https://api.nuget.org/v3/index.json;
+            https://nuget.bepinex.dev/v3/index.json;
+            https://nuget.samboy.dev/v3/index.json
+        </RestoreAdditionalProjectSources>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- generated PEAK reference assemblies -->
+        <Reference Include="..\ref\*.dll">
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
+        <PackageReference Include="BepInEx.BaseLib" Version="5.4.21" />
+        <PackageReference Include="BepInEx.Core" Version="5.4.21" />
+        <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
+        <PackageReference Include="UnityEngine.Modules" Version="6000.0.36" IncludeAssets="compile" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="..\Unity\Boba's Custom Hats\AssetBundles\bobacustomhats*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>%(Filename)%(Extension)</Link>
+        </Content>
+    </ItemGroup>
+
+</Project>
