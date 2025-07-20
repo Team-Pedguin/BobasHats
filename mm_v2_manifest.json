@@ -1,0 +1,27 @@
+{
+	"manifestVersion":1,
+	"name":"Boba-BobaCustomHats",
+	"authorName":"Boba",
+	"websiteUrl":"",
+	"displayName":"BobaCustomHats",
+	"description":"Adds new hats to PEAK!",
+	"gameVersion":"",
+	"networkMode":"",
+	"packageType":"",
+	"installMode":"",
+	"installedAtTime":0,
+	"loaders":[],
+	"dependencies":[
+		"Radsi2-PassporPagination-1.0.0",
+		"BepInEx-BepInExPack_PEAK-5.4.2403"
+	],
+	"incompatibilities":[],
+	"optionalDependencies":[],
+	"versionNumber":{
+		"major":1,
+		"minor":0,
+		"patch":1
+	},
+	"enabled":true,
+	"icon":""
+}

@@ -18,20 +18,31 @@
             <Private>false</Private>
         </Reference>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
-        <PackageReference Include="BepInEx.BaseLib" Version="5.4.21" />
-        <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-        <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
-        <PackageReference Include="UnityEngine.Modules" Version="6000.0.36" IncludeAssets="compile" />
+        <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all"/>
+        <PackageReference Include="BepInEx.BaseLib" Version="5.4.21"/>
+        <PackageReference Include="BepInEx.Core" Version="5.4.21"/>
+        <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0"/>
+        <PackageReference Include="UnityEngine.Modules" Version="6000.0.36" IncludeAssets="compile"/>
     </ItemGroup>
-    
+
     <ItemGroup>
         <Content Include="..\Unity\Boba's Custom Hats\AssetBundles\bobacustomhats*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>%(Filename)%(Extension)</Link>
         </Content>
+        <Content Include="..\manifest.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\mm_v2_manifest.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
+    
+    <Target Name="ZipAfterBuild" AfterTargets="Build">
+        <ZipDirectory DestinationFile="$(SolutionDir)BobaCustomHats$(Config).zip"
+                      SourceDirectory="$(OutputPath)" Overwrite="true" />
+    </Target>
 
 </Project>

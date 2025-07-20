@@ -1,0 +1,9 @@
+{
+  "name": "BobaCustomHats",
+  "displayName": "Boba's Custom Hats",
+  "authorName": "Boba",
+  "version_number": "1.0.1",
+  "website_url": "https://github.com/Team-Pedguin/BobaCustomHats",
+  "description": "Adds new hats to PEAK!",
+  "dependencies": ["Radsi2-PassporPagination-1.0.0","BepInEx-BepInExPack_PEAK-5.4.2403"]
+}
