@@ -2,6 +2,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BobaCustomHats", "BobaCustomHats\BobaCustomHats.csproj", "{2A0AD6B6-3C87-45FF-BB79-312EA6AB4EA6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{7B7D21B3-00B0-4A7B-8772-549FE2F80EE0}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+		manifest.json = manifest.json
+		mm_v2_manifest.json = mm_v2_manifest.json
+		nuget.config = nuget.config
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
