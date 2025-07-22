@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using BepInEx.Logging;
 
-namespace BobaCustomHats;
+namespace BobaHats;
 
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
@@ -21,7 +21,7 @@ public class Plugin : BaseUnityPlugin
         Instance = this;
 
         Logger.LogInfo($"Plugin v{MyPluginInfo.PLUGIN_VERSION} is starting up.");
-        new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll(typeof(BobaCustomHatsPatches));
+        new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll(typeof(BobaHatsPatches));
         StartCoroutine(LoadHatsFromBundle());
     }
 

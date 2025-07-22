@@ -38,10 +38,19 @@
         <Content Include="..\mm_v2_manifest.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+        <Content Include="..\icon.png">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\hero.png">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\README.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
     
     <Target Name="ZipAfterBuild" AfterTargets="Build">
-        <ZipDirectory DestinationFile="$(SolutionDir)BobaCustomHats$(Config).zip"
+        <ZipDirectory DestinationFile="$(SolutionDir)BobaRat-BobaHats-.zip"
                       SourceDirectory="$(OutputPath)" Overwrite="true" />
     </Target>
 

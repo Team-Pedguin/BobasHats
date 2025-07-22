@@ -1,4 +1,4 @@
-﻿namespace BobaCustomHats;
+﻿namespace BobaHats;
 
 public struct Hat
 {

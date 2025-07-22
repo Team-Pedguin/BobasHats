@@ -4,10 +4,10 @@ using BepInEx.Logging;
 using Zorro.Core;
 using Object = UnityEngine.Object;
 
-namespace BobaCustomHats;
+namespace BobaHats;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal static class BobaCustomHatsPatches
+internal static class BobaHatsPatches
 {
     private static ManualLogSource Logger => Plugin.Instance!.Logger;
 

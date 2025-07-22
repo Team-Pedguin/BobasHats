@@ -1,9 +1,9 @@
 {
 	"manifestVersion":1,
-	"name":"Boba-BobaCustomHats",
-	"authorName":"Boba",
+	"name":"BobaRat-BobaHats",
+	"authorName":"BobaRat",
 	"websiteUrl":"",
-	"displayName":"BobaCustomHats",
+	"displayName":"BobaHats",
 	"description":"Adds new hats to PEAK!",
 	"gameVersion":"",
 	"networkMode":"",
@@ -23,5 +23,5 @@
 		"patch":1
 	},
 	"enabled":true,
-	"icon":""
+	"icon":"icon.png"
 }
