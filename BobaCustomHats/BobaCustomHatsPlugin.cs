@@ -76,4 +76,25 @@ public class Plugin : BaseUnityPlugin
 
         Logger.LogInfo("Done!");
     }
+
+    public bool CreateHatOption(Customization customization, string name, Texture2D icon)
+    {
+        if (Array.Exists(customization.hats, hat => hat.name == name))
+        {
+            Logger.LogError($"Tried to add {name} a second time.");
+            return false;
+        }
+
+        var hatOption = ScriptableObject.CreateInstance<CustomizationOption>();
+        hatOption.color = Color.white;
+        hatOption.name = name;
+        hatOption.texture = icon;
+        hatOption.type = Customization.Type.Hat;
+        hatOption.requiredAchievement = ACHIEVEMENTTYPE.NONE;
+        customization.hats = customization.hats.AddToArray(hatOption);
+
+        Logger.LogDebug($"{name} added.");
+
+        return true;
+    }
 }
