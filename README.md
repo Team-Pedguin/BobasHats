@@ -1,4 +1,4 @@
-﻿![Hero Image](hero.png)
+﻿![Hero Image](https://i.imgur.com/eXkVrot.png)
 
 [![@Boba on Twitch](https://img.shields.io/twitch/status/boba?label=boba)](https://twitch.tv/boba/schedule)
 <!-- [![Support me on Ko-fi](https://img.shields.io/badge/Support%20me%20on-Ko--fi-orange?logo=kofi)](https://ko-fi.com/yogsboba) -->
