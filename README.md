@@ -36,7 +36,7 @@ distribute their own hat packs!
 
 # License
 
-The full license (CC BY-NC-SA 4.0 + MIT) is [here](https://github.com/Team-Pedguin/BobasHats/LICENSE).
+The full license (CC BY-NC-SA 4.0 + MIT) is [here](https://github.com/Team-Pedguin/BobasHats/blob/main/LICENSE).
 
 This mod's source is licensed under the
 [MIT License](https://opensource.org/license/mit).
