@@ -1,9 +1,8 @@
 ﻿![Hero Image](https://i.imgur.com/eXkVrot.png)
 
+[![Install Boba's Hats on Thunderstore](https://img.shields.io/badge/Install%20Boba's%20Hats%20on-Thunderstore-blue?logo=thunderstore)](https://thunderstore.io/c/peak/p/BobaRat/BobasHats/1.0.2/)
 [![@Boba on Twitch](https://img.shields.io/twitch/status/boba?label=boba)](https://twitch.tv/boba/schedule)
 <!-- [![Support me on Ko-fi](https://img.shields.io/badge/Support%20me%20on-Ko--fi-orange?logo=kofi)](https://ko-fi.com/yogsboba) -->
-
-
 
 # Boba's Hats
 
@@ -35,3 +34,12 @@ distribute their own hat packs!
 > We help an estimated 157,000 cats and kittens a year through our national network which includes around 210 volunteer-run branches and 34 centres.
 > Our work doesn’t stop there, however: we also provide an array of cat care information via our publications, help and advice section and National Information Line; promote the benefits of neutering to prevent unwanted litters from being born and becoming the abandoned cats of tomorrow and seek to educate people of all ages about cats and their care.
 
+# License
+
+The full license (CC BY-NC-SA 4.0 + MIT) is [here](https://github.com/Team-Pedguin/BobasHats/LICENSE).
+
+This mod's source is licensed under the
+[MIT License](https://opensource.org/license/mit).
+
+The creative assets in this mod are licensed under the
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
