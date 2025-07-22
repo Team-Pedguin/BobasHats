@@ -1,9 +1,9 @@
 {
 	"manifestVersion":1,
-	"name":"BobaRat-BobaHats",
+	"name":"BobaRat-BobasHats",
 	"authorName":"BobaRat",
-	"websiteUrl":"",
-	"displayName":"BobaHats",
+	"websiteUrl":"https://github.com/Team-Pedguin/BobasHats",
+	"displayName":"BobasHats",
 	"description":"Adds new hats to PEAK!",
 	"gameVersion":"",
 	"networkMode":"",
