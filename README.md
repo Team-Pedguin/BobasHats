@@ -1,6 +1,6 @@
 ﻿![Hero Image](https://i.imgur.com/eXkVrot.png)
 
-[![Install Boba's Hats on Thunderstore](https://img.shields.io/badge/Install%20Boba's%20Hats%20on-Thunderstore-blue?logo=thunderstore)](https://thunderstore.io/c/peak/p/BobaRat/BobasHats/1.0.2/)
+[![Install Boba's Hats on Thunderstore](https://img.shields.io/badge/Install%20Boba's%20Hats%20on-Thunderstore-blue?logo=thunderstore)](https://thunderstore.io/c/peak/p/BobaRat/BobasHats/)
 [![@Boba on Twitch](https://img.shields.io/twitch/status/boba?label=boba)](https://twitch.tv/boba/schedule)
 <!-- [![Support me on Ko-fi](https://img.shields.io/badge/Support%20me%20on-Ko--fi-orange?logo=kofi)](https://ko-fi.com/yogsboba) -->
 
