@@ -2,7 +2,7 @@
   "name": "BobasHats",
   "displayName": "Boba's Hats",
   "authorName": "BobaRat",
-  "version_number": "1.0.1",
+  "version_number": "1.0.2",
   "website_url": "https://github.com/Team-Pedguin/BobasHats",
   "description": "Adds new hats to PEAK!",
   "dependencies": ["Radsi2-PassporPagination-1.0.0","BepInEx-BepInExPack_PEAK-5.4.2403"]
