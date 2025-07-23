@@ -24,9 +24,27 @@ internal static class BobaHatsPatches
         }
 
         Logger.LogDebug("Adding hat CustomizationOptions.");
+        var options = new List<CustomizationOption>();
         foreach (var hat in Plugin.Instance.Hats)
-            if (!Plugin.Instance.CreateHatOption(hat.Name, hat.Icon))
+        {
+            var hatOption = Plugin.Instance.CreateHatOption(hat.Name, hat.Icon);
+            if (hatOption == null)
+            {
                 Logger.LogError($"Failed to create CustomizationOption for hat '{hat.Name}'.");
+                continue;
+            }
+
+            options.Add(hatOption);
+        }
+        
+        var customization = GetCustomizationSingleton();
+        if (customization == null)
+        {
+            Logger.LogError("Customization component not found, cannot add hat options.");
+            return;
+        }
+        customization.hats = customization.hats.Concat(options).ToArray();
+
 
         Logger.LogDebug("Done.");
     }
@@ -212,13 +230,21 @@ internal static class BobaHatsPatches
             if (PhotonNetwork.TryGetPlayer(actorNumber, out var photonPlayer))
                 player = playerDataSvc.GetPlayerData(photonPlayer);
         }
+
         if (player == null)
         {
             Logger.LogError($"Player data for actor number {actorNumber} is null, cannot set hat.");
             return;
         }
 
-        var hats = Singleton<Customization>.Instance.hats;
+        var customization = GetCustomizationSingleton();
+        if (customization == null)
+        {
+            Logger.LogError("Customization component not found, cannot set hat.");
+            return;
+        }
+
+        var hats = customization.hats;
         if (hats == null)
         {
             Logger.LogError("No hats found in character customization, cannot set hat.");
@@ -283,7 +309,14 @@ internal static class BobaHatsPatches
 
         Logger.LogDebug($"Attempting to deserialize hat for player #{__instance.ActorNumber} to '{name}'");
 
-        var hats = Singleton<Customization>.Instance.hats;
+        var customization = GetCustomizationSingleton();
+        if (customization == null)
+        {
+            Logger.LogError("Customization component not found, cannot set hat.");
+            return;
+        }
+
+        var hats = customization.hats;
         if (hats == null)
         {
             Logger.LogError("No hats found in character customization, cannot set hat.");
@@ -303,30 +336,37 @@ internal static class BobaHatsPatches
     {
         Logger.LogDebug($"CustomizationOption: {option.name} {option.type} {option.texture} {option.color} #{index}");
 
+        var customization = GetCustomizationSingleton();
+        if (customization == null)
+        {
+            Logger.LogError("Customization component not found, cannot validate options.");
+            return;
+        }
+
         switch (option.type)
         {
             case Customization.Type.Skin:
-                var skin = Singleton<Customization>.Instance.skins[index];
+                var skin = customization.skins[index];
                 //Logger.LogDebug($"Skin #{index}: {skin.name} {skin.texture} {skin.color}");
                 break;
             case Customization.Type.Eyes:
-                var eyes = Singleton<Customization>.Instance.eyes[index];
+                var eyes = customization.eyes[index];
                 //Logger.LogDebug($"Eyes #{index}: {eyes.name} {eyes.texture} {eyes.color}");
                 break;
             case Customization.Type.Mouth:
-                var mouth = Singleton<Customization>.Instance.mouths[index];
+                var mouth = customization.mouths[index];
                 //Logger.LogDebug($"Mouth #{index}: {mouth.name} {mouth.texture} {mouth.color}");
                 break;
             case Customization.Type.Accessory:
-                var accessory = Singleton<Customization>.Instance.accessories[index];
+                var accessory = customization.accessories[index];
                 //Logger.LogDebug($"Accessory #{index}: {accessory.name} {accessory.texture} {accessory.color}");
                 break;
             case Customization.Type.Fit:
-                var fit = Singleton<Customization>.Instance.fits[index];
+                var fit = customization.fits[index];
                 //Logger.LogDebug($"Fit #{index}: {fit.name} {fit.texture} {fit.color}");
                 break;
             case Customization.Type.Hat:
-                var hat = Singleton<Customization>.Instance.hats[index];
+                var hat = customization.hats[index];
                 //Logger.LogDebug($"Hat #{index}: {hat.name} {hat.texture} {hat.color}");
                 var dummy = PassportManager.instance.dummy;
                 var character = GetLocalCharacter();
@@ -336,8 +376,8 @@ internal static class BobaHatsPatches
                     return;
                 }
 
-                var customization = character.refs.customization;
-                ref var customizationHats = ref customization.refs.playerHats;
+                var charCustomization = character.refs.customization;
+                ref var customizationHats = ref charCustomization.refs.playerHats;
                 ref var dummyHats = ref dummy.refs.playerHats;
                 if (customizationHats.Length != dummyHats.Length)
                 {
@@ -392,6 +432,12 @@ internal static class BobaHatsPatches
                 //Logger.LogWarning($"Unknown CustomizationOption type: {option.type}");
                 break;
         }
+    }
+
+    private static Customization GetCustomizationSingleton()
+    {
+        return Customization.Instance
+               ?? throw new InvalidOperationException("Global Customization singleton not found!");
     }
 
     private static Character? GetLocalCharacter()

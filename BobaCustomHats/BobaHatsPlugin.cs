@@ -78,31 +78,14 @@ public class Plugin : BaseUnityPlugin
         Logger.LogInfo("Done!");
     }
 
-    public bool CreateHatOption(string hatName, Texture2D icon)
+    public CustomizationOption CreateHatOption(string hatName, Texture2D icon)
     {
-        var customization = Singleton<Customization>.Instance; //__instance.GetComponent<Customization>();
-        if (customization == null)
-        {
-            Logger.LogError("Customization component not found on PassportManager, cannot add hats.");
-            return false;
-        }
-
-        if (Array.Exists(customization.hats, hat => hat.name == hatName))
-        {
-            Logger.LogError($"Tried to add {hatName} a second time.");
-            return false;
-        }
-
         var hatOption = ScriptableObject.CreateInstance<CustomizationOption>();
         hatOption.color = Color.white;
         hatOption.name = hatName;
         hatOption.texture = icon;
         hatOption.type = Customization.Type.Hat;
         hatOption.requiredAchievement = ACHIEVEMENTTYPE.NONE;
-        customization.hats = customization.hats.AddToArray(hatOption);
-
-        Logger.LogDebug($"{hatName} added.");
-
-        return true;
+        return hatOption;
     }
 }
