@@ -78,7 +78,7 @@ public class Plugin : BaseUnityPlugin
         Logger.LogInfo("Done!");
     }
 
-    public CustomizationOption CreateHatOption(string hatName, Texture2D icon)
+    public static CustomizationOption CreateHatOption(string hatName, Texture2D icon)
     {
         var hatOption = ScriptableObject.CreateInstance<CustomizationOption>();
         hatOption.color = Color.white;

@@ -11,6 +11,7 @@ namespace BobaHats;
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 internal static class BobaHatsPatches
 {
+    private static int _newHatStartIndex;
     private static ManualLogSource Logger => Plugin.Instance!.Logger;
 
     [HarmonyPatch(typeof(PassportManager), "Awake")]
@@ -22,12 +23,33 @@ internal static class BobaHatsPatches
             Logger.LogError("No hats loaded, skipping PassportManager patch.");
             return;
         }
+        
+        var customization = GetCustomizationSingleton();
+        if (customization == null)
+        {
+            Logger.LogError("Customization component not found, cannot add hat options.");
+            return;
+        }
+
+        var hatStartIndex = customization.hats.Length;
+        if (hatStartIndex < _newHatStartIndex)
+        {
+            Logger.LogError("Customization hats is misaligned, padding with empty options.");
+            var missingHats = new CustomizationOption[_newHatStartIndex - hatStartIndex];
+            for (var i = 0; i < missingHats.Length; i++)
+            {
+                ref var missingHat = ref missingHats[i];
+                missingHat = Plugin.CreateHatOption($"MissingHat{hatStartIndex + i}", Texture2D.whiteTexture);
+                missingHat.requiredAchievement = (ACHIEVEMENTTYPE)(-1);
+            }
+            customization.hats = customization.hats.Concat(missingHats).ToArray();
+        }
 
         Logger.LogDebug("Adding hat CustomizationOptions.");
-        var options = new List<CustomizationOption>();
+        var options = new List<CustomizationOption>(Plugin.Instance.Hats.Length);
         foreach (var hat in Plugin.Instance.Hats)
         {
-            var hatOption = Plugin.Instance.CreateHatOption(hat.Name, hat.Icon);
+            var hatOption = Plugin.CreateHatOption(hat.Name, hat.Icon);
             if (hatOption == null)
             {
                 Logger.LogError($"Failed to create CustomizationOption for hat '{hat.Name}'.");
@@ -36,15 +58,7 @@ internal static class BobaHatsPatches
 
             options.Add(hatOption);
         }
-        
-        var customization = GetCustomizationSingleton();
-        if (customization == null)
-        {
-            Logger.LogError("Customization component not found, cannot add hat options.");
-            return;
-        }
         customization.hats = customization.hats.Concat(options).ToArray();
-
 
         Logger.LogDebug("Done.");
     }
@@ -85,7 +99,7 @@ internal static class BobaHatsPatches
 
         Logger.LogDebug($"Instantiating hats as children of {hatsContainer}.");
 
-        var newPlayerWorldHats = new List<Renderer>();
+        var newPlayerWorldHats = new List<Renderer>(Plugin.Instance.Hats.Length);
         foreach (var hat in Plugin.Instance.Hats)
         {
             if (hat.Prefab == null)
@@ -131,7 +145,7 @@ internal static class BobaHatsPatches
 
         var dummyHatLayer = firstDummyHat.gameObject.layer;
         Logger.LogDebug($"Instantiating hats for dummy as children of {dummyHatContainer}.");
-        var newPlayerDummyHats = new List<Renderer>();
+        var newPlayerDummyHats = new List<Renderer>(Plugin.Instance.Hats.Length);
         foreach (var hat in Plugin.Instance.Hats)
         {
             if (hat.Prefab == null)
@@ -164,22 +178,24 @@ internal static class BobaHatsPatches
             newPlayerDummyHats.Add(renderer);
         }
 
-        var hatIndexStart = customizationHats.Length;
+        _newHatStartIndex = customizationHats.Length;
         if (customizationHats.Length != dummyHats.Length)
         {
             // pad out whichever side is shorter
             var diff = customizationHats.Length - dummyHats.Length;
-            if (diff > 0)
+
+            switch (diff)
             {
-                // customization has more hats
-                Logger.LogError($"Customization has {customizationHats.Length} hats, dummy has {dummyHats.Length} hats. Padding dummy hats with nulls.");
-                dummyHats = dummyHats.Concat(Enumerable.Repeat<Renderer>(null!, diff)).ToArray();
-            }
-            else
-            {
-                // dummy has more hats
-                Logger.LogError($"Dummy has {dummyHats.Length} hats, customization has {customizationHats.Length} hats. Padding customization hats with nulls.");
-                customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(null!, -diff)).ToArray();
+                case > 0:
+                    // customization has more hats
+                    Logger.LogError($"Customization has {customizationHats.Length} hats, dummy has {dummyHats.Length} hats. Padding dummy hats with nulls.");
+                    dummyHats = dummyHats.Concat(Enumerable.Repeat<Renderer>(null!, diff)).ToArray();
+                    break;
+                case < 0:
+                    // dummy has more hats
+                    Logger.LogError($"Dummy has {dummyHats.Length} hats, customization has {customizationHats.Length} hats. Padding customization hats with nulls.");
+                    customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(null!, -diff)).ToArray();
+                    break;
             }
         }
 
@@ -187,7 +203,7 @@ internal static class BobaHatsPatches
         dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
 
         // validate same hats on customization and passport dummy by name (for our hats only)
-        for (var i = hatIndexStart; i < customizationHats.Length; i++)
+        for (var i = _newHatStartIndex; i < customizationHats.Length; i++)
         {
             var customizationHat = customizationHats[i];
             var dummyHat = dummyHats[i];
@@ -201,7 +217,7 @@ internal static class BobaHatsPatches
                 Logger.LogError($"Customization hat '{customizationHat.name}' does not match dummy hat '{dummyHat.name}' at index #{i}");
         }
 
-        Logger.LogDebug("Completed adding hats to PassportManager and CharacterCustomization.");
+        Logger.LogDebug($"Completed adding hats to PassportManager and CharacterCustomization at slot #{_newHatStartIndex}.");
     }
 
 
