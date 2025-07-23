@@ -42,6 +42,7 @@ internal static class BobaHatsPatches
 
         //var hatsContainer = __instance.transform.FindChildRecursive("Hat");
         var customization = Character.localCharacter.refs.customization;
+        ref var customizationHats = ref customization.refs.playerHats;
         var hatsContainer = customization.transform.FindChildRecursive("Hat");
 
         Logger.LogDebug($"Hats container found: {hatsContainer} (inst #{hatsContainer.GetInstanceID()})");
@@ -67,8 +68,21 @@ internal static class BobaHatsPatches
             return;
         }
 
-        Logger.LogDebug($"Instantiating hats as children of {hatsContainer}.");
+        var characterShader = Shader.Find("W/Character");
         var newPlayerHats = new List<Renderer>();
+        var dummy = PassportManager.instance.dummy;
+        var dummyHatContainer = dummy.transform.FindChildRecursive("Hat");
+        ref var dummyHats = ref dummy.refs.playerHats;
+        var firstDummyHat = dummyHats.FirstOrDefault();
+
+        var hatMat = customizationHats[0]?.GetComponentInChildren<MeshRenderer>(true)?.material;
+        var hatMatFloatProps = hatMat?.GetPropertyNames(MaterialPropertyType.Float).ToDictionary(n => n, n => hatMat.GetFloat(n));
+
+        var dummyHatMat = dummyHats[0]?.GetComponentInChildren<MeshRenderer>(true)?.material;
+        var dummyHatMatFloatProps = dummyHatMat?.GetPropertyNames(MaterialPropertyType.Float).ToDictionary(n => n, n => dummyHatMat.GetFloat(n));
+
+        Logger.LogDebug($"Instantiating hats as children of {hatsContainer}.");
+
         foreach (var hat in Plugin.Instance.Hats)
         {
             if (hat.Prefab == null)
@@ -84,7 +98,13 @@ internal static class BobaHatsPatches
             for (var i = 0; i < meshRenderers.Length; i++)
             {
                 ref readonly var mr = ref meshRenderers[i];
-                mr.material.shader = Shader.Find("W/Character");
+                var mat = mr.material;
+                mat.enableInstancing = true;
+                mat.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                mat.shader = characterShader;
+                if (hatMatFloatProps == null) continue;
+                foreach (var prop in hatMatFloatProps)
+                    mat.SetFloat(prop.Key, prop.Value);
             }
 
             var renderer = newHat.GetComponentInChildren<Renderer>();
@@ -94,16 +114,12 @@ internal static class BobaHatsPatches
         }
 
         newPlayerHats.Clear();
-        var dummy = PassportManager.instance.dummy;
-        var dummyHatContainer = dummy.transform.FindChildRecursive("Hat");
         if (dummyHatContainer == null)
         {
             Logger.LogError("Dummy hat container not found, cannot instantiate hats for dummy.");
             return;
         }
 
-        ref var dummyHats = ref dummy.refs.playerHats;
-        var firstDummyHat = dummyHats.FirstOrDefault();
         if (firstDummyHat == null)
         {
             Logger.LogDebug("Dummy is missing hats - something is wrong, aborting...");
@@ -128,7 +144,13 @@ internal static class BobaHatsPatches
             for (var i = 0; i < meshRenderers.Length; i++)
             {
                 ref readonly var mr = ref meshRenderers[i];
-                mr.material.shader = Shader.Find("W/Character");
+                var mat = mr.material;
+                mat.enableInstancing = true;
+                mat.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                //mat.shader = characterShader;
+                //if (dummyHatMatFloatProps == null) continue;
+                //foreach (var prop in dummyHatMatFloatProps)
+                //    mat.SetFloat(prop.Key, prop.Value);
             }
 
             var renderer = newHat.GetComponentInChildren<Renderer>();
@@ -137,7 +159,6 @@ internal static class BobaHatsPatches
             newPlayerHats.Add(renderer);
         }
 
-        ref var customizationHats = ref customization.refs.playerHats;
         var hatIndexStart = customizationHats.Length;
         if (customizationHats.Length != dummyHats.Length)
         {
@@ -159,7 +180,7 @@ internal static class BobaHatsPatches
 
         customizationHats = customizationHats.Concat(newPlayerHats).ToArray();
         dummyHats = dummyHats.Concat(newPlayerHats).ToArray();
-        
+
         // validate same hats on customization and passport dummy by name (for our hats only)
         for (var i = hatIndexStart; i < customizationHats.Length; i++)
         {
@@ -174,6 +195,7 @@ internal static class BobaHatsPatches
             if (customizationHat.name != dummyHat.name)
                 Logger.LogError($"Customization hat '{customizationHat.name}' does not match dummy hat '{dummyHat.name}' at index #{i}");
         }
+
         Logger.LogDebug("Completed adding hats to PassportManager and CharacterCustomization.");
     }
 
@@ -230,8 +252,9 @@ internal static class BobaHatsPatches
                         customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(null!, -diff)).ToArray();
                     }
                 }
+
                 // find hats with the same name in customization and dummy hats with different indices
-                var mismatchedHats = new List<(string,int,int)>();
+                var mismatchedHats = new List<(string, int, int)>();
                 for (var i = 0; i < customizationHats.Length; i++)
                 {
                     var customizationHat = customizationHats[i];
@@ -249,6 +272,7 @@ internal static class BobaHatsPatches
                         }
                     }
                 }
+
                 // report mismatched hats
                 if (mismatchedHats.Count > 0)
                 {
@@ -258,6 +282,7 @@ internal static class BobaHatsPatches
                         Logger.LogError($"- Hat '{hatName}' at index #{customIndex} does not match passport dummy index #{dummyIndex}");
                     }
                 }
+
                 break;
             default:
                 //Logger.LogWarning($"Unknown CustomizationOption type: {option.type}");
