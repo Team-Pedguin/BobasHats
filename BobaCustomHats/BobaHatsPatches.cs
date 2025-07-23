@@ -15,11 +15,15 @@ internal static class BobaHatsPatches
 {
     private static ManualLogSource Logger => Plugin.Instance!.Logger;
 
+    private static bool initialized = false;
+
 
     [HarmonyPatch(typeof(CharacterCustomization), "Awake")]
     [HarmonyPostfix]
     public static void CharacterCustomizationAwakePostfix(CharacterCustomization __instance)
     {
+        if (initialized) return;
+        
         if (Plugin.Instance?.Hats == null || Plugin.Instance.Hats.Length == 0)
         {
             Logger.LogError("No hats loaded, skipping instantiation.");
@@ -131,6 +135,7 @@ internal static class BobaHatsPatches
             newPlayerDummyHats.Add(renderer);
         }
 
+        /*
         if (customizationHats.Length != dummyHats.Length)
         {
             // pad out whichever side is shorter
@@ -157,12 +162,12 @@ internal static class BobaHatsPatches
             }
         }
         
-        var newHatStartIndex = customizationHats.Length;
+        var newHatStartIndex = customizationHats.Length;*/
         customizationHats = customizationHats.Concat(newPlayerWorldHats).ToArray();
         dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
 
         // validate same hats on customization and passport dummy by name (for our hats only)
-        for (var i = newHatStartIndex; i < customizationHats.Length; i++)
+        /*for (var i = newHatStartIndex; i < customizationHats.Length; i++)
         {
             var customizationHat = customizationHats[i];
             var dummyHat = dummyHats[i];
@@ -174,11 +179,11 @@ internal static class BobaHatsPatches
 
             if (customizationHat.name != dummyHat.name)
                 Logger.LogError($"Customization hat '{customizationHat.name}' does not match dummy hat '{dummyHat.name}' at index #{i}");
-        }
+        }*/
 
         var customization = GetCustomizationSingleton();
         CustomizationOption[]? excessHats = null;
-        var hatStartIndex = customization.hats.Length;
+        /*var hatStartIndex = customization.hats.Length;
         if (hatStartIndex < newHatStartIndex)
         {
             Logger.LogError("Customization hats is misaligned, padding with empty options.");
@@ -199,7 +204,7 @@ internal static class BobaHatsPatches
                 Logger.LogWarning($"Customization hats has more options than expected: {customization.hats.Length} > {newHatStartIndex}");
                 excessHats = customization.hats.Skip(newHatStartIndex).ToArray();
             }
-        }
+        }*/
 
         Logger.LogDebug("Adding hat CustomizationOptions.");
         var newHatOptions = new List<CustomizationOption>(Plugin.Instance.Hats.Length);
@@ -215,7 +220,7 @@ internal static class BobaHatsPatches
             newHatOptions.Add(hatOption);
         }
 
-        if (excessHats == null)
+        /*if (excessHats == null)
         {
             customization.hats = customization.hats.Concat(newHatOptions).ToArray();
         }
@@ -224,14 +229,17 @@ internal static class BobaHatsPatches
             // insert hats in sync with their index in other places
             var firstHats = customization.hats.Take(newHatStartIndex).ToArray();
             customization.hats = firstHats.Concat(newHatOptions).Concat(excessHats).ToArray();
-        }
+        }*/
 
-        //Logger.LogDebug("Done.");
+        customization.hats = customization.hats.Concat(newHatOptions).ToArray();
 
-        Logger.LogDebug($"Completed adding hats to PassportManager, CharacterCustomization, and Customization starting at slot #{newHatStartIndex}.");
+        //Logger.LogDebug($"Completed adding hats to PassportManager, CharacterCustomization, and Customization starting at slot #{newHatStartIndex}.");
+        
+        Logger.LogDebug("Done.");
     }
 
 
+    /*
     [HarmonyPatch(typeof(SyncPersistentPlayerDataPackage), nameof(SyncPersistentPlayerDataPackage.SerializeData))]
     [HarmonyPostfix]
     public static void SyncPersistentPlayerDataPackageSerializeData(SyncPersistentPlayerDataPackage __instance, BinarySerializer binarySerializer)
@@ -286,15 +294,20 @@ internal static class BobaHatsPatches
 
         Logger.LogDebug($"Serialized hat for player #{actorNumber}: '{name}'");
     }
+    */
 
-    private static Character? GetCharacterByActorNumber(int actorNumber)
+    /*
+     
+     private static Character? GetCharacterByActorNumber(int actorNumber)
     {
         return Character.AllCharacters.FirstOrDefault(ch
             => ch.photonView != null
                && ch.photonView.Owner != null
                && ch.photonView.Owner.ActorNumber == actorNumber);
     }
+    */
 
+    /*
     [HarmonyPatch(typeof(SyncPersistentPlayerDataPackage), nameof(SyncPersistentPlayerDataPackage.DeserializeData))]
     [HarmonyPostfix]
     public static void SyncPersistentPlayerDataPackageDeserializeData(SyncPersistentPlayerDataPackage __instance, BinaryDeserializer binaryDeserializer)
@@ -363,8 +376,11 @@ internal static class BobaHatsPatches
             Logger.LogDebug($"Deserialized hat for player #{__instance.ActorNumber} from '{name}' to #{newHatIndex}");
         }
         else
+        {
             Logger.LogError($"Hat '{name}' not found in customization hats, cannot set hat for player #{__instance.ActorNumber}");
+        }
     }
+    */
 
     private static Customization GetCustomizationSingleton()
     {
@@ -372,12 +388,15 @@ internal static class BobaHatsPatches
                ?? throw new InvalidOperationException("Global Customization singleton not found!");
     }
 
-    /*private static Character? GetLocalCharacter()
+    /*
+     private static Character? GetLocalCharacter()
     {
         return Character.localCharacter
                ?? GetCharacterByActorNumber(PhotonNetwork.LocalPlayer.ActorNumber);
-    }*/
+    }
+    */
     
+    /*
     [HarmonyPatch(typeof(PersistentPlayerDataService), nameof(PersistentPlayerDataService.OnSyncReceived))]
     [HarmonyFinalizer]
     public static Exception? PersistentPlayerDataServiceOnSyncReceivedFinalizer(PersistentPlayerDataService __instance, SyncPersistentPlayerDataPackage package, Exception? __exception)
@@ -389,4 +408,5 @@ internal static class BobaHatsPatches
 
         return null;
     }
+    */
 }
