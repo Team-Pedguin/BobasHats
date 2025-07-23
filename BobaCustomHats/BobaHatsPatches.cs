@@ -1,6 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text;
 using BepInEx.Logging;
 using Photon.Pun;
@@ -45,9 +43,8 @@ internal static class BobaHatsPatches
         }
 
         //var hatsContainer = __instance.transform.FindChildRecursive("Hat");
-        var customization = Character.localCharacter.refs.customization;
-        ref var customizationHats = ref customization.refs.playerHats;
-        var hatsContainer = customization.transform.FindChildRecursive("Hat");
+        ref var customizationHats = ref __instance.refs.playerHats;
+        var hatsContainer = __instance.transform.FindChildRecursive("Hat");
 
         Logger.LogDebug($"Hats container found: {hatsContainer} (inst #{hatsContainer.GetInstanceID()})");
 
@@ -209,32 +206,34 @@ internal static class BobaHatsPatches
             return;
         }
 
-        var player = playerDataSvc.GetPlayerData(__instance.ActorNumber);
+        var actorNumber = __instance.ActorNumber;
+        var player = playerDataSvc.GetPlayerData(actorNumber);
         if (player == null)
         {
-            PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
+            PhotonNetwork.TryGetPlayer(actorNumber, out var photonPlayer);
             player = playerDataSvc.GetPlayerData(photonPlayer);
             if (player == null)
             {
-                Logger.LogError($"Player data for actor number {__instance.ActorNumber} is null, cannot set hat.");
+                Logger.LogError($"Player data for actor number {actorNumber} is null, cannot set hat.");
                 return;
             }
         }
 
-        if (!Character.GetCharacterWithPhotonID(__instance.ActorNumber, out var character))
+        var character = GetCharacterByActorNumber(actorNumber);
+        if (character == null)
         {
-            Logger.LogError($"Local character is null and could not be found for actor number {__instance.ActorNumber}, cannot set hat.");
+            Logger.LogError($"Character is null and could not be found for actor number {actorNumber}, cannot set hat.");
             return;
         }
 
-        var localCharacterRefs = character.refs;
-        if (localCharacterRefs == null)
+        var characterRefs = character.refs;
+        if (characterRefs == null)
         {
-            Logger.LogError("Local character refs are null, cannot set hat.");
+            Logger.LogError("Character refs are null, cannot set hat.");
             return;
         }
 
-        var characterCustomization = localCharacterRefs.customization;
+        var characterCustomization = characterRefs.customization;
         if (characterCustomization == null)
         {
             Logger.LogError("Character customization is null, cannot set hat.");
@@ -259,7 +258,15 @@ internal static class BobaHatsPatches
         var name = hat?.name ?? "";
         binarySerializer.WriteString(name, Encoding.UTF8);
 
-        Logger.LogDebug($"Attempting to serialize hat for player #{__instance.ActorNumber}: '{name}'");
+        Logger.LogDebug($"Attempting to serialize hat for player #{actorNumber}: '{name}'");
+    }
+
+    private static Character? GetCharacterByActorNumber(int actorNumber)
+    {
+        return Character.AllCharacters.FirstOrDefault(ch
+            => ch.photonView != null
+               && ch.photonView.Owner != null
+               && ch.photonView.Owner.ActorNumber == actorNumber);
     }
 
     [HarmonyPatch(typeof(SyncPersistentPlayerDataPackage), nameof(SyncPersistentPlayerDataPackage.DeserializeData))]
@@ -330,14 +337,14 @@ internal static class BobaHatsPatches
             return;
         }
 
-        var localCharacterRefs = character.refs;
-        if (localCharacterRefs == null)
+        var characterRefs = character.refs;
+        if (characterRefs == null)
         {
             Logger.LogError("Local character refs are null, cannot set hat.");
             return;
         }
 
-        var characterCustomization = localCharacterRefs.customization;
+        var characterCustomization = characterRefs.customization;
         if (characterCustomization == null)
         {
             Logger.LogError("Character customization is null, cannot set hat.");
@@ -397,7 +404,14 @@ internal static class BobaHatsPatches
                 var hat = Singleton<Customization>.Instance.hats[index];
                 //Logger.LogDebug($"Hat #{index}: {hat.name} {hat.texture} {hat.color}");
                 var dummy = PassportManager.instance.dummy;
-                var customization = Character.localCharacter.refs.customization;
+                var character = GetLocalCharacter();
+                if (character == null)
+                {
+                    Logger.LogError("Local character is null, cannot validate hats.");
+                    return;
+                }
+
+                var customization = character.refs.customization;
                 ref var customizationHats = ref customization.refs.playerHats;
                 ref var dummyHats = ref dummy.refs.playerHats;
                 if (customizationHats.Length != dummyHats.Length)
@@ -453,5 +467,12 @@ internal static class BobaHatsPatches
                 //Logger.LogWarning($"Unknown CustomizationOption type: {option.type}");
                 break;
         }
+    }
+
+    private static Character? GetLocalCharacter()
+    {
+        return Character.localCharacter
+               ?? Character.AllCharacters
+                   .FirstOrDefault(c => c.photonView.IsMine);
     }
 }
