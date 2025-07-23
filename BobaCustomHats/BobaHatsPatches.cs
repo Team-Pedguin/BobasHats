@@ -69,7 +69,6 @@ internal static class BobaHatsPatches
         }
 
         var characterShader = Shader.Find("W/Character");
-        var newPlayerHats = new List<Renderer>();
         var dummy = PassportManager.instance.dummy;
         var dummyHatContainer = dummy.transform.FindChildRecursive("Hat");
         ref var dummyHats = ref dummy.refs.playerHats;
@@ -83,6 +82,7 @@ internal static class BobaHatsPatches
 
         Logger.LogDebug($"Instantiating hats as children of {hatsContainer}.");
 
+        var newPlayerWorldHats = new List<Renderer>();
         foreach (var hat in Plugin.Instance.Hats)
         {
             if (hat.Prefab == null)
@@ -110,10 +110,9 @@ internal static class BobaHatsPatches
             var renderer = newHat.GetComponentInChildren<Renderer>();
             renderer.gameObject.SetActive(false);
 
-            newPlayerHats.Add(renderer);
+            newPlayerWorldHats.Add(renderer);
         }
 
-        newPlayerHats.Clear();
         if (dummyHatContainer == null)
         {
             Logger.LogError("Dummy hat container not found, cannot instantiate hats for dummy.");
@@ -128,6 +127,7 @@ internal static class BobaHatsPatches
 
         var dummyHatLayer = firstDummyHat.gameObject.layer;
         Logger.LogDebug($"Instantiating hats for dummy as children of {dummyHatContainer}.");
+        var newPlayerDummyHats = new List<Renderer>();
         foreach (var hat in Plugin.Instance.Hats)
         {
             if (hat.Prefab == null)
@@ -147,16 +147,16 @@ internal static class BobaHatsPatches
                 var mat = mr.material;
                 mat.enableInstancing = true;
                 mat.hideFlags = HideFlags.DontUnloadUnusedAsset;
-                //mat.shader = characterShader;
-                //if (dummyHatMatFloatProps == null) continue;
-                //foreach (var prop in dummyHatMatFloatProps)
-                //    mat.SetFloat(prop.Key, prop.Value);
+                mat.shader = characterShader;
+                if (dummyHatMatFloatProps == null) continue;
+                foreach (var prop in dummyHatMatFloatProps)
+                    mat.SetFloat(prop.Key, prop.Value);
             }
 
             var renderer = newHat.GetComponentInChildren<Renderer>();
             renderer.gameObject.SetActive(false);
 
-            newPlayerHats.Add(renderer);
+            newPlayerDummyHats.Add(renderer);
         }
 
         var hatIndexStart = customizationHats.Length;
@@ -178,8 +178,8 @@ internal static class BobaHatsPatches
             }
         }
 
-        customizationHats = customizationHats.Concat(newPlayerHats).ToArray();
-        dummyHats = dummyHats.Concat(newPlayerHats).ToArray();
+        customizationHats = customizationHats.Concat(newPlayerWorldHats).ToArray();
+        dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
 
         // validate same hats on customization and passport dummy by name (for our hats only)
         for (var i = hatIndexStart; i < customizationHats.Length; i++)
