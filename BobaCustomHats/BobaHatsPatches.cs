@@ -360,7 +360,7 @@ internal static class BobaHatsPatches
         if (newHatIndex >= 0)
         {
             __instance.Data.customizationData.currentHat = newHatIndex;
-            Logger.LogDebug($"Deserialized hat for player #{__instance.ActorNumber} to '{name}'");
+            Logger.LogDebug($"Deserialized hat for player #{__instance.ActorNumber} from '{name}' to #{newHatIndex}");
         }
         else
             Logger.LogError($"Hat '{name}' not found in customization hats, cannot set hat for player #{__instance.ActorNumber}");
@@ -372,9 +372,21 @@ internal static class BobaHatsPatches
                ?? throw new InvalidOperationException("Global Customization singleton not found!");
     }
 
-    private static Character? GetLocalCharacter()
+    /*private static Character? GetLocalCharacter()
     {
         return Character.localCharacter
                ?? GetCharacterByActorNumber(PhotonNetwork.LocalPlayer.ActorNumber);
+    }*/
+    
+    [HarmonyPatch(typeof(PersistentPlayerDataService), nameof(PersistentPlayerDataService.OnSyncReceived))]
+    [HarmonyFinalizer]
+    public static Exception? PersistentPlayerDataServiceOnSyncReceivedFinalizer(PersistentPlayerDataService __instance, SyncPersistentPlayerDataPackage package, Exception? __exception)
+    {
+        if (__exception != null)
+        {
+            Logger.LogWarning($"PersistentPlayerDataService.OnSyncReceived threw an exception\n{__exception.GetType().FullName}: {__exception.Message}\n{__exception.StackTrace}");
+        }
+
+        return null;
     }
 }
