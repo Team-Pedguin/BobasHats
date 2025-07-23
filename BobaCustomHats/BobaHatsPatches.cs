@@ -131,7 +131,6 @@ internal static class BobaHatsPatches
             newPlayerDummyHats.Add(renderer);
         }
 
-        var newHatStartIndex = customizationHats.Length;
         if (customizationHats.Length != dummyHats.Length)
         {
             // pad out whichever side is shorter
@@ -157,7 +156,8 @@ internal static class BobaHatsPatches
                 }
             }
         }
-
+        
+        var newHatStartIndex = customizationHats.Length;
         customizationHats = customizationHats.Concat(newPlayerWorldHats).ToArray();
         dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
 
