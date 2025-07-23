@@ -23,11 +23,10 @@ internal static class BobaHatsPatches
             return;
         }
 
-        var customization = __instance.GetComponent<Customization>();
-
         Logger.LogDebug("Adding hat CustomizationOptions.");
         foreach (var hat in Plugin.Instance.Hats)
-            Plugin.Instance.CreateHatOption(customization, hat.Name, hat.Icon);
+            if (!Plugin.Instance.CreateHatOption(hat.Name, hat.Icon))
+                Logger.LogError($"Failed to create CustomizationOption for hat '{hat.Name}'.");
 
         Logger.LogDebug("Done.");
     }
@@ -210,44 +209,16 @@ internal static class BobaHatsPatches
         var player = playerDataSvc.GetPlayerData(actorNumber);
         if (player == null)
         {
-            PhotonNetwork.TryGetPlayer(actorNumber, out var photonPlayer);
-            player = playerDataSvc.GetPlayerData(photonPlayer);
-            if (player == null)
-            {
-                Logger.LogError($"Player data for actor number {actorNumber} is null, cannot set hat.");
-                return;
-            }
+            if (PhotonNetwork.TryGetPlayer(actorNumber, out var photonPlayer))
+                player = playerDataSvc.GetPlayerData(photonPlayer);
         }
-
-        var character = GetCharacterByActorNumber(actorNumber);
-        if (character == null)
+        if (player == null)
         {
-            Logger.LogError($"Character is null and could not be found for actor number {actorNumber}, cannot set hat.");
+            Logger.LogError($"Player data for actor number {actorNumber} is null, cannot set hat.");
             return;
         }
 
-        var characterRefs = character.refs;
-        if (characterRefs == null)
-        {
-            Logger.LogError("Character refs are null, cannot set hat.");
-            return;
-        }
-
-        var characterCustomization = characterRefs.customization;
-        if (characterCustomization == null)
-        {
-            Logger.LogError("Character customization is null, cannot set hat.");
-            return;
-        }
-
-        var characterCustomizationRefs = characterCustomization.refs;
-        if (characterCustomizationRefs == null)
-        {
-            Logger.LogError("Character customization refs are null, cannot set hat.");
-            return;
-        }
-
-        var hats = characterCustomizationRefs.playerHats;
+        var hats = Singleton<Customization>.Instance.hats;
         if (hats == null)
         {
             Logger.LogError("No hats found in character customization, cannot set hat.");
@@ -312,53 +283,7 @@ internal static class BobaHatsPatches
 
         Logger.LogDebug($"Attempting to deserialize hat for player #{__instance.ActorNumber} to '{name}'");
 
-        var playerDataSvc = GameHandler.GetService<PersistentPlayerDataService>();
-        if (playerDataSvc == null)
-        {
-            Logger.LogError("PersistentPlayerDataService is null, cannot set hat.");
-            return;
-        }
-
-        var playerData = playerDataSvc.GetPlayerData(__instance.ActorNumber);
-        if (playerData == null)
-        {
-            PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
-            playerData = playerDataSvc.GetPlayerData(photonPlayer);
-            if (playerData == null)
-            {
-                Logger.LogError($"Player data for actor number {__instance.ActorNumber} is null, cannot set hat.");
-                return;
-            }
-        }
-
-        if (!Character.GetCharacterWithPhotonID(__instance.ActorNumber, out var character))
-        {
-            Logger.LogError($"Local character is null and could not be found for actor number {__instance.ActorNumber}, cannot set hat.");
-            return;
-        }
-
-        var characterRefs = character.refs;
-        if (characterRefs == null)
-        {
-            Logger.LogError("Local character refs are null, cannot set hat.");
-            return;
-        }
-
-        var characterCustomization = characterRefs.customization;
-        if (characterCustomization == null)
-        {
-            Logger.LogError("Character customization is null, cannot set hat.");
-            return;
-        }
-
-        var characterCustomizationRefs = characterCustomization.refs;
-        if (characterCustomizationRefs == null)
-        {
-            Logger.LogError("Character customization refs are null, cannot set hat.");
-            return;
-        }
-
-        var hats = characterCustomizationRefs.playerHats;
+        var hats = Singleton<Customization>.Instance.hats;
         if (hats == null)
         {
             Logger.LogError("No hats found in character customization, cannot set hat.");
@@ -407,7 +332,7 @@ internal static class BobaHatsPatches
                 var character = GetLocalCharacter();
                 if (character == null)
                 {
-                    Logger.LogError("Local character is null, cannot validate hats.");
+                    Logger.LogError("Character is null, cannot validate hats.");
                     return;
                 }
 
@@ -472,7 +397,6 @@ internal static class BobaHatsPatches
     private static Character? GetLocalCharacter()
     {
         return Character.localCharacter
-               ?? Character.AllCharacters
-                   .FirstOrDefault(c => c.photonView.IsMine);
+               ?? GetCharacterByActorNumber(PhotonNetwork.LocalPlayer.ActorNumber);
     }
 }

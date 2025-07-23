@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using BepInEx.Logging;
+using Zorro.Core;
 
 namespace BobaHats;
 
@@ -77,23 +78,30 @@ public class Plugin : BaseUnityPlugin
         Logger.LogInfo("Done!");
     }
 
-    public bool CreateHatOption(Customization customization, string name, Texture2D icon)
+    public bool CreateHatOption(string hatName, Texture2D icon)
     {
-        if (Array.Exists(customization.hats, hat => hat.name == name))
+        var customization = Singleton<Customization>.Instance; //__instance.GetComponent<Customization>();
+        if (customization == null)
         {
-            Logger.LogError($"Tried to add {name} a second time.");
+            Logger.LogError("Customization component not found on PassportManager, cannot add hats.");
+            return false;
+        }
+
+        if (Array.Exists(customization.hats, hat => hat.name == hatName))
+        {
+            Logger.LogError($"Tried to add {hatName} a second time.");
             return false;
         }
 
         var hatOption = ScriptableObject.CreateInstance<CustomizationOption>();
         hatOption.color = Color.white;
-        hatOption.name = name;
+        hatOption.name = hatName;
         hatOption.texture = icon;
         hatOption.type = Customization.Type.Hat;
         hatOption.requiredAchievement = ACHIEVEMENTTYPE.NONE;
         customization.hats = customization.hats.AddToArray(hatOption);
 
-        Logger.LogDebug($"{name} added.");
+        Logger.LogDebug($"{hatName} added.");
 
         return true;
     }
