@@ -200,16 +200,60 @@ internal static class BobaHatsPatches
         binarySerializer.WriteInt(0);
         binarySerializer.WriteInt(0);
         binarySerializer.WriteInt(0);
+
         // hat name
         var player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(__instance.ActorNumber);
         if (player == null)
         {
             PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
             player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(photonPlayer);
+            if (player == null)
+            {
+                Logger.LogError($"Player data for actor number {__instance.ActorNumber} is null, cannot set hat.");
+                return;
+            }
         }
-        var hat = Character.localCharacter.refs.customization.refs.playerHats[player.customizationData.currentHat];
+        
+        var localCharacter = Character.localCharacter;
+        if (localCharacter == null)
+        {
+            Logger.LogError("Local character is null, cannot set hat.");
+            return;
+        }
+
+        var localCharacterRefs = localCharacter.refs;
+        if (localCharacterRefs == null)
+        {
+            Logger.LogError("Local character refs are null, cannot set hat.");
+            return;
+        }
+
+        var characterCustomization = localCharacterRefs.customization;
+        if (characterCustomization == null)
+        {
+            Logger.LogError("Character customization is null, cannot set hat.");
+            return;
+        }
+
+        var characterCustomizationRefs = characterCustomization.refs;
+        if (characterCustomizationRefs == null)
+        {
+            Logger.LogError("Character customization refs are null, cannot set hat.");
+            return;
+        }
+
+        var hats = characterCustomizationRefs.playerHats;
+        if (hats == null)
+        {
+            Logger.LogError("No hats found in character customization, cannot set hat.");
+            return;
+        }
+
+        var hat = hats[player.customizationData.currentHat];
         var name = hat?.name ?? "";
         binarySerializer.WriteString(name, Encoding.UTF8);
+
+        Logger.LogDebug($"Attempting to serialize hat for player #{__instance.ActorNumber}: '{name}'");
     }
 
     [HarmonyPatch(typeof(SyncPersistentPlayerDataPackage), nameof(SyncPersistentPlayerDataPackage.DeserializeData))]
@@ -223,39 +267,97 @@ internal static class BobaHatsPatches
             Logger.LogError($"Missing 1st spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
+
         spacer = binaryDeserializer.ReadInt();
         if (spacer != 0)
         {
             Logger.LogError($"Missing 2nd spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
+
         spacer = binaryDeserializer.ReadInt();
         if (spacer != 0)
         {
             Logger.LogError($"Missing 3rd spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
+
         spacer = binaryDeserializer.ReadInt();
         if (spacer != 0)
         {
             Logger.LogError($"Missing 4th spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
+
         // hat name
         var name = binaryDeserializer.ReadString(Encoding.UTF8);
+        if (string.IsNullOrEmpty(name))
+        {
+            Logger.LogError("Hat name is null or empty, cannot set hat.");
+            return;
+        }
+
+        Logger.LogDebug($"Attempting to deserialize hat for player #{__instance.ActorNumber} to '{name}'");
+
         var playerDataSvc = GameHandler.GetService<PersistentPlayerDataService>();
+        if (playerDataSvc == null)
+        {
+            Logger.LogError("PersistentPlayerDataService is null, cannot set hat.");
+            return;
+        }
+
         var player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(__instance.ActorNumber);
         if (player == null)
         {
             PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
             player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(photonPlayer);
+            if (player == null)
+            {
+                Logger.LogError($"Player data for actor number {__instance.ActorNumber} is null, cannot set hat.");
+                return;
+            }
         }
-        
-        var hats = Character.localCharacter.refs.customization.refs.playerHats;
+
+        var localCharacter = Character.localCharacter;
+        if (localCharacter == null)
+        {
+            Logger.LogError("Local character is null, cannot set hat.");
+            return;
+        }
+
+        var localCharacterRefs = localCharacter.refs;
+        if (localCharacterRefs == null)
+        {
+            Logger.LogError("Local character refs are null, cannot set hat.");
+            return;
+        }
+
+        var characterCustomization = localCharacterRefs.customization;
+        if (characterCustomization == null)
+        {
+            Logger.LogError("Character customization is null, cannot set hat.");
+            return;
+        }
+
+        var characterCustomizationRefs = characterCustomization.refs;
+        if (characterCustomizationRefs == null)
+        {
+            Logger.LogError("Character customization refs are null, cannot set hat.");
+            return;
+        }
+
+        var hats = characterCustomizationRefs.playerHats;
+        if (hats == null)
+        {
+            Logger.LogError("No hats found in character customization, cannot set hat.");
+            return;
+        }
+
         var newHatIndex = Array.FindIndex(hats, hat => hat.name == name);
         if (newHatIndex >= 0)
             __instance.Data.customizationData.currentHat = newHatIndex;
-
+        else
+            Logger.LogError($"Hat '{name}' not found in customization hats, cannot set hat for player {__instance.ActorNumber}.");
     }
 
     [HarmonyPatch(typeof(PassportManager), nameof(PassportManager.SetOption))]
