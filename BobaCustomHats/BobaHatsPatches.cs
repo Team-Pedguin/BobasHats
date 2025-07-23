@@ -40,8 +40,9 @@ internal static class BobaHatsPatches
             return;
         }
 
-        var hatsContainer = __instance.transform.FindChildRecursive("Hat");
-        //var hatsContainer = __instance.transform.FindChildRecursive("Head");
+        //var hatsContainer = __instance.transform.FindChildRecursive("Hat");
+        var customization = Character.localCharacter.refs.customization;
+        var hatsContainer = customization.transform.FindChildRecursive("Hat");
 
         Logger.LogDebug($"Hats container found: {hatsContainer} (inst #{hatsContainer.GetInstanceID()})");
 
@@ -91,7 +92,6 @@ internal static class BobaHatsPatches
 
             newPlayerHats.Add(renderer);
         }
-        __instance.refs.playerHats = __instance.refs.playerHats.Concat(newPlayerHats).ToArray();
 
         newPlayerHats.Clear();
         var dummy = PassportManager.instance.dummy;
@@ -102,12 +102,14 @@ internal static class BobaHatsPatches
             return;
         }
 
-        var firstDummyHat = dummy.refs.playerHats.FirstOrDefault();
+        ref var dummyHats = ref dummy.refs.playerHats;
+        var firstDummyHat = dummyHats.FirstOrDefault();
         if (firstDummyHat == null)
         {
             Logger.LogDebug("Dummy is missing hats - something is wrong, aborting...");
             return;
         }
+
         var dummyHatLayer = firstDummyHat.gameObject.layer;
         Logger.LogDebug($"Instantiating hats for dummy as children of {dummyHatContainer}.");
         foreach (var hat in Plugin.Instance.Hats)
@@ -135,11 +137,48 @@ internal static class BobaHatsPatches
             newPlayerHats.Add(renderer);
         }
 
-        dummy.refs.playerHats = dummy.refs.playerHats.Concat(newPlayerHats).ToArray();
+        ref var customizationHats = ref customization.refs.playerHats;
+        var hatIndexStart = customizationHats.Length;
+        if (customizationHats.Length != dummyHats.Length)
+        {
+            // pad out whichever side is shorter
+            var diff = customizationHats.Length - dummyHats.Length;
+            if (diff > 0)
+            {
+                // customization has more hats
+                Logger.LogError($"Customization has {customizationHats.Length} hats, dummy has {dummyHats.Length} hats. Padding dummy hats with nulls.");
+                dummyHats = dummyHats.Concat(Enumerable.Repeat<Renderer>(null!, diff)).ToArray();
+            }
+            else
+            {
+                // dummy has more hats
+                Logger.LogError($"Dummy has {dummyHats.Length} hats, customization has {customizationHats.Length} hats. Padding customization hats with nulls.");
+                customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(null!, -diff)).ToArray();
+            }
+        }
+
+        customizationHats = customizationHats.Concat(newPlayerHats).ToArray();
+        dummyHats = dummyHats.Concat(newPlayerHats).ToArray();
+        
+        // validate same hats on customization and passport dummy by name (for our hats only)
+        for (var i = hatIndexStart; i < customizationHats.Length; i++)
+        {
+            var customizationHat = customizationHats[i];
+            var dummyHat = dummyHats[i];
+            if (customizationHat == null || dummyHat == null)
+            {
+                Logger.LogError($"Customization or dummy hat at index {i} is null!");
+                continue;
+            }
+
+            if (customizationHat.name != dummyHat.name)
+                Logger.LogError($"Customization hat '{customizationHat.name}' does not match dummy hat '{dummyHat.name}' at index #{i}");
+        }
+        Logger.LogDebug("Completed adding hats to PassportManager and CharacterCustomization.");
     }
 
 
-    /*[HarmonyPatch(typeof(PassportManager), nameof(PassportManager.SetOption))]
+    [HarmonyPatch(typeof(PassportManager), nameof(PassportManager.SetOption))]
     [HarmonyPostfix]
     public static void PassportManagerSetOptionPostfix(PassportManager __instance, CustomizationOption option, int index)
     {
@@ -149,31 +188,80 @@ internal static class BobaHatsPatches
         {
             case Customization.Type.Skin:
                 var skin = Singleton<Customization>.Instance.skins[index];
-                Logger.LogDebug($"Skin #{index}: {skin.name} {skin.texture} {skin.color}");
+                //Logger.LogDebug($"Skin #{index}: {skin.name} {skin.texture} {skin.color}");
                 break;
             case Customization.Type.Eyes:
                 var eyes = Singleton<Customization>.Instance.eyes[index];
-                Logger.LogDebug($"Eyes #{index}: {eyes.name} {eyes.texture} {eyes.color}");
+                //Logger.LogDebug($"Eyes #{index}: {eyes.name} {eyes.texture} {eyes.color}");
                 break;
             case Customization.Type.Mouth:
                 var mouth = Singleton<Customization>.Instance.mouths[index];
-                Logger.LogDebug($"Mouth #{index}: {mouth.name} {mouth.texture} {mouth.color}");
+                //Logger.LogDebug($"Mouth #{index}: {mouth.name} {mouth.texture} {mouth.color}");
                 break;
             case Customization.Type.Accessory:
                 var accessory = Singleton<Customization>.Instance.accessories[index];
-                Logger.LogDebug($"Accessory #{index}: {accessory.name} {accessory.texture} {accessory.color}");
+                //Logger.LogDebug($"Accessory #{index}: {accessory.name} {accessory.texture} {accessory.color}");
                 break;
             case Customization.Type.Fit:
                 var fit = Singleton<Customization>.Instance.fits[index];
-                Logger.LogDebug($"Fit #{index}: {fit.name} {fit.texture} {fit.color}");
+                //Logger.LogDebug($"Fit #{index}: {fit.name} {fit.texture} {fit.color}");
                 break;
             case Customization.Type.Hat:
                 var hat = Singleton<Customization>.Instance.hats[index];
-                Logger.LogDebug($"Hat #{index}: {hat.name} {hat.texture} {hat.color}");
+                //Logger.LogDebug($"Hat #{index}: {hat.name} {hat.texture} {hat.color}");
+                var dummy = PassportManager.instance.dummy;
+                var customization = Character.localCharacter.refs.customization;
+                ref var customizationHats = ref customization.refs.playerHats;
+                ref var dummyHats = ref dummy.refs.playerHats;
+                if (customizationHats.Length != dummyHats.Length)
+                {
+                    // pad out whichever side is shorter
+                    var diff = customizationHats.Length - dummyHats.Length;
+                    if (diff > 0)
+                    {
+                        // customization has more hats
+                        Logger.LogError($"Customization has {customizationHats.Length} hats, dummy has {dummyHats.Length} hats. Padding dummy hats with nulls.");
+                        dummyHats = dummyHats.Concat(Enumerable.Repeat<Renderer>(null!, diff)).ToArray();
+                    }
+                    else
+                    {
+                        // dummy has more hats
+                        Logger.LogError($"Dummy has {dummyHats.Length} hats, customization has {customizationHats.Length} hats. Padding customization hats with nulls.");
+                        customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(null!, -diff)).ToArray();
+                    }
+                }
+                // find hats with the same name in customization and dummy hats with different indices
+                var mismatchedHats = new List<(string,int,int)>();
+                for (var i = 0; i < customizationHats.Length; i++)
+                {
+                    var customizationHat = customizationHats[i];
+                    if (customizationHat == null) continue;
+
+                    for (var j = 0; j < dummyHats.Length; j++)
+                    {
+                        var dummyHat = dummyHats[j];
+                        if (dummyHat == null) continue;
+
+                        if (customizationHat.name == dummyHat.name && i != j)
+                        {
+                            mismatchedHats.Add((customizationHat.name, i, j));
+                            break;
+                        }
+                    }
+                }
+                // report mismatched hats
+                if (mismatchedHats.Count > 0)
+                {
+                    Logger.LogError($"Found {mismatchedHats.Count} mismatched hats:");
+                    foreach (var (hatName, customIndex, dummyIndex) in mismatchedHats)
+                    {
+                        Logger.LogError($"- Hat '{hatName}' at index #{customIndex} does not match passport dummy index #{dummyIndex}");
+                    }
+                }
                 break;
             default:
-                Logger.LogWarning($"Unknown CustomizationOption type: {option.type}");
+                //Logger.LogWarning($"Unknown CustomizationOption type: {option.type}");
                 break;
         }
-    }*/
+    }
 }
