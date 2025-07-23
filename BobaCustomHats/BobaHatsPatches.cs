@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using BepInEx.Logging;
+using Photon.Pun;
 using Zorro.Core;
 using Zorro.Core.Serizalization;
 using Object = UnityEngine.Object;
@@ -48,21 +50,6 @@ internal static class BobaHatsPatches
         var hatsContainer = customization.transform.FindChildRecursive("Hat");
 
         Logger.LogDebug($"Hats container found: {hatsContainer} (inst #{hatsContainer.GetInstanceID()})");
-
-#if DEBUG
-        // build hierarchical path to the hats container for logging
-        var hatsContainerPath = new StringBuilder();
-        var currentTransform = hatsContainer;
-        while (currentTransform != null)
-        {
-            if (hatsContainerPath.Length > 0)
-                hatsContainerPath.Insert(0, "/");
-            hatsContainerPath.Insert(0, currentTransform.name);
-            currentTransform = currentTransform.parent;
-        }
-
-        Logger.LogDebug($"Hats container path: {hatsContainerPath}");
-#endif
 
         if (hatsContainer == null)
         {
@@ -214,8 +201,12 @@ internal static class BobaHatsPatches
         binarySerializer.WriteInt(0);
         binarySerializer.WriteInt(0);
         // hat name
-        var playerDataSvc = GameHandler.GetService<PersistentPlayerDataService>();
-        var player = playerDataSvc.PersistentPlayerDatas[__instance.ActorNumber];
+        var player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(__instance.ActorNumber);
+        if (player == null)
+        {
+            PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
+            player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(photonPlayer);
+        }
         var hat = Character.localCharacter.refs.customization.refs.playerHats[player.customizationData.currentHat];
         var name = hat?.name ?? "";
         binarySerializer.WriteString(name, Encoding.UTF8);
@@ -253,9 +244,17 @@ internal static class BobaHatsPatches
         // hat name
         var name = binaryDeserializer.ReadString(Encoding.UTF8);
         var playerDataSvc = GameHandler.GetService<PersistentPlayerDataService>();
-        ref var hatIndex = ref playerDataSvc.PersistentPlayerDatas[__instance.ActorNumber].customizationData.currentHat;
+        var player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(__instance.ActorNumber);
+        if (player == null)
+        {
+            PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
+            player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(photonPlayer);
+        }
+        
         var hats = Character.localCharacter.refs.customization.refs.playerHats;
-        hatIndex = Array.FindIndex(hats, hat => hat.name == name);
+        var newHatIndex = Array.FindIndex(hats, hat => hat.name == name);
+        if (newHatIndex >= 0)
+            __instance.Data.customizationData.currentHat = newHatIndex;
 
     }
 
