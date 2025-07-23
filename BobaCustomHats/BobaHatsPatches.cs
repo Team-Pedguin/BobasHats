@@ -202,26 +202,32 @@ internal static class BobaHatsPatches
         binarySerializer.WriteInt(0);
 
         // hat name
-        var player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(__instance.ActorNumber);
+        var playerDataSvc = GameHandler.GetService<PersistentPlayerDataService>();
+        if (playerDataSvc == null)
+        {
+            Logger.LogError("PersistentPlayerDataService is null, cannot set hat.");
+            return;
+        }
+
+        var player = playerDataSvc.GetPlayerData(__instance.ActorNumber);
         if (player == null)
         {
             PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
-            player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(photonPlayer);
+            player = playerDataSvc.GetPlayerData(photonPlayer);
             if (player == null)
             {
                 Logger.LogError($"Player data for actor number {__instance.ActorNumber} is null, cannot set hat.");
                 return;
             }
         }
-        
-        var localCharacter = Character.localCharacter;
-        if (localCharacter == null)
+
+        if (!Character.GetCharacterWithPhotonID(__instance.ActorNumber, out var character))
         {
-            Logger.LogError("Local character is null, cannot set hat.");
+            Logger.LogError($"Local character is null and could not be found for actor number {__instance.ActorNumber}, cannot set hat.");
             return;
         }
 
-        var localCharacterRefs = localCharacter.refs;
+        var localCharacterRefs = character.refs;
         if (localCharacterRefs == null)
         {
             Logger.LogError("Local character refs are null, cannot set hat.");
@@ -306,26 +312,25 @@ internal static class BobaHatsPatches
             return;
         }
 
-        var player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(__instance.ActorNumber);
-        if (player == null)
+        var playerData = playerDataSvc.GetPlayerData(__instance.ActorNumber);
+        if (playerData == null)
         {
             PhotonNetwork.TryGetPlayer(__instance.ActorNumber, out var photonPlayer);
-            player = GameHandler.GetService<PersistentPlayerDataService>().GetPlayerData(photonPlayer);
-            if (player == null)
+            playerData = playerDataSvc.GetPlayerData(photonPlayer);
+            if (playerData == null)
             {
                 Logger.LogError($"Player data for actor number {__instance.ActorNumber} is null, cannot set hat.");
                 return;
             }
         }
 
-        var localCharacter = Character.localCharacter;
-        if (localCharacter == null)
+        if (!Character.GetCharacterWithPhotonID(__instance.ActorNumber, out var character))
         {
-            Logger.LogError("Local character is null, cannot set hat.");
+            Logger.LogError($"Local character is null and could not be found for actor number {__instance.ActorNumber}, cannot set hat.");
             return;
         }
 
-        var localCharacterRefs = localCharacter.refs;
+        var localCharacterRefs = character.refs;
         if (localCharacterRefs == null)
         {
             Logger.LogError("Local character refs are null, cannot set hat.");
