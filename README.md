@@ -1,8 +1,8 @@
 ﻿![Hero Image](https://i.imgur.com/eXkVrot.png)
-
-[![Install Boba's Hats on Thunderstore](https://img.shields.io/badge/Install%20Boba's%20Hats%20on-Thunderstore-blue?logo=thunderstore)](https://thunderstore.io/c/peak/p/BobaRat/BobasHats/)
-[![@Boba on Twitch](https://img.shields.io/twitch/status/boba?label=boba)](https://twitch.tv/boba/schedule)
-<!-- [![Support me on Ko-fi](https://img.shields.io/badge/Support%20me%20on-Ko--fi-orange?logo=kofi)](https://ko-fi.com/yogsboba) -->
+[![Install Boba's Hats on Thunderstore](https://img.shields.io/thunderstore/dt/BobaRat/BobasHats?logoColor=39d&labelColor=222&color=39d&logo=thunderstore&style=flat&label=Download+from+Thunderstore)](https://thunderstore.io/c/peak/p/BobaRat/BobasHats/)
+[![@Boba on Twitch](https://img.shields.io/twitch/status/boba?labelColor=222&color=94f&style=flat&logo=twitch&label=Watch+Boba+on+Twitch.tv)](https://twitch.tv/boba/schedule)
+[![Boba's Hats on GitHub](https://img.shields.io/github/last-commit/Team-Pedguin/BobasHats?labelColor=222&style=flat&logo=github&label=See+the+latest+work+on+GitHub)](https://github.com/Team-Pedguin/BobasHats)
+<!-- [![Support me on Ko-fi](https://img.shields.io/badge/Support%20me%20on-Ko--fi-orange?labelColor=222&logo=kofi&style=flat&label=Donate+via+Ko-Fi!)](https://ko-fi.com/yogsboba) -->
 
 # Boba's Hats
 
