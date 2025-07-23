@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using BepInEx.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Photon.Pun;
 using Zorro.Core;
 using Zorro.Core.Serizalization;
@@ -11,57 +13,8 @@ namespace BobaHats;
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 internal static class BobaHatsPatches
 {
-    private static int _newHatStartIndex;
     private static ManualLogSource Logger => Plugin.Instance!.Logger;
 
-    [HarmonyPatch(typeof(PassportManager), "Awake")]
-    [HarmonyPostfix]
-    public static void PassportManagerAwakePostfix(PassportManager __instance)
-    {
-        if (Plugin.Instance?.Hats == null || Plugin.Instance.Hats.Length == 0)
-        {
-            Logger.LogError("No hats loaded, skipping PassportManager patch.");
-            return;
-        }
-        
-        var customization = GetCustomizationSingleton();
-        if (customization == null)
-        {
-            Logger.LogError("Customization component not found, cannot add hat options.");
-            return;
-        }
-
-        var hatStartIndex = customization.hats.Length;
-        if (hatStartIndex < _newHatStartIndex)
-        {
-            Logger.LogError("Customization hats is misaligned, padding with empty options.");
-            var missingHats = new CustomizationOption[_newHatStartIndex - hatStartIndex];
-            for (var i = 0; i < missingHats.Length; i++)
-            {
-                ref var missingHat = ref missingHats[i];
-                missingHat = Plugin.CreateHatOption($"MissingHat{hatStartIndex + i}", Texture2D.whiteTexture);
-                missingHat.requiredAchievement = (ACHIEVEMENTTYPE)(-1);
-            }
-            customization.hats = customization.hats.Concat(missingHats).ToArray();
-        }
-
-        Logger.LogDebug("Adding hat CustomizationOptions.");
-        var options = new List<CustomizationOption>(Plugin.Instance.Hats.Length);
-        foreach (var hat in Plugin.Instance.Hats)
-        {
-            var hatOption = Plugin.CreateHatOption(hat.Name, hat.Icon);
-            if (hatOption == null)
-            {
-                Logger.LogError($"Failed to create CustomizationOption for hat '{hat.Name}'.");
-                continue;
-            }
-
-            options.Add(hatOption);
-        }
-        customization.hats = customization.hats.Concat(options).ToArray();
-
-        Logger.LogDebug("Done.");
-    }
 
     [HarmonyPatch(typeof(CharacterCustomization), "Awake")]
     [HarmonyPostfix]
@@ -178,7 +131,7 @@ internal static class BobaHatsPatches
             newPlayerDummyHats.Add(renderer);
         }
 
-        _newHatStartIndex = customizationHats.Length;
+        var newHatStartIndex = customizationHats.Length;
         if (customizationHats.Length != dummyHats.Length)
         {
             // pad out whichever side is shorter
@@ -187,15 +140,21 @@ internal static class BobaHatsPatches
             switch (diff)
             {
                 case > 0:
+                {
                     // customization has more hats
-                    Logger.LogError($"Customization has {customizationHats.Length} hats, dummy has {dummyHats.Length} hats. Padding dummy hats with nulls.");
-                    dummyHats = dummyHats.Concat(Enumerable.Repeat<Renderer>(null!, diff)).ToArray();
+                    Logger.LogError($"Customization has {customizationHats.Length} hats, dummy has {dummyHats.Length} hats. Padding dummy hats.");
+                    var firstHat = dummyHats.First();
+                    dummyHats = dummyHats.Concat(Enumerable.Repeat<Renderer>(firstHat, diff)).ToArray();
                     break;
+                }
                 case < 0:
+                {
                     // dummy has more hats
-                    Logger.LogError($"Dummy has {dummyHats.Length} hats, customization has {customizationHats.Length} hats. Padding customization hats with nulls.");
-                    customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(null!, -diff)).ToArray();
+                    Logger.LogError($"Dummy has {dummyHats.Length} hats, customization has {customizationHats.Length} hats. Padding customization hats.");
+                    var firstHat = customizationHats.First();
+                    customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(firstHat, -diff)).ToArray();
                     break;
+                }
             }
         }
 
@@ -203,7 +162,7 @@ internal static class BobaHatsPatches
         dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
 
         // validate same hats on customization and passport dummy by name (for our hats only)
-        for (var i = _newHatStartIndex; i < customizationHats.Length; i++)
+        for (var i = newHatStartIndex; i < customizationHats.Length; i++)
         {
             var customizationHat = customizationHats[i];
             var dummyHat = dummyHats[i];
@@ -217,7 +176,59 @@ internal static class BobaHatsPatches
                 Logger.LogError($"Customization hat '{customizationHat.name}' does not match dummy hat '{dummyHat.name}' at index #{i}");
         }
 
-        Logger.LogDebug($"Completed adding hats to PassportManager and CharacterCustomization at slot #{_newHatStartIndex}.");
+        var customization = GetCustomizationSingleton();
+        CustomizationOption[]? excessHats = null;
+        var hatStartIndex = customization.hats.Length;
+        if (hatStartIndex < newHatStartIndex)
+        {
+            Logger.LogError("Customization hats is misaligned, padding with empty options.");
+            var missingHats = new CustomizationOption[newHatStartIndex - hatStartIndex];
+            for (var i = 0; i < missingHats.Length; i++)
+            {
+                ref var missingHat = ref missingHats[i];
+                missingHat = Plugin.CreateHatOption($"MissingHat{hatStartIndex + i}", Texture2D.whiteTexture);
+                missingHat.requiredAchievement = (ACHIEVEMENTTYPE) (-1);
+            }
+
+            customization.hats = customization.hats.Concat(missingHats).ToArray();
+        }
+        else
+        {
+            if (customization.hats.Length > newHatStartIndex)
+            {
+                Logger.LogWarning($"Customization hats has more options than expected: {customization.hats.Length} > {newHatStartIndex}");
+                excessHats = customization.hats.Skip(newHatStartIndex).ToArray();
+            }
+        }
+
+        Logger.LogDebug("Adding hat CustomizationOptions.");
+        var newHatOptions = new List<CustomizationOption>(Plugin.Instance.Hats.Length);
+        foreach (var hat in Plugin.Instance.Hats)
+        {
+            var hatOption = Plugin.CreateHatOption(hat.Name, hat.Icon);
+            if (hatOption == null)
+            {
+                Logger.LogError($"Failed to create CustomizationOption for hat '{hat.Name}'.");
+                continue;
+            }
+
+            newHatOptions.Add(hatOption);
+        }
+
+        if (excessHats == null)
+        {
+            customization.hats = customization.hats.Concat(newHatOptions).ToArray();
+        }
+        else
+        {
+            // insert hats in sync with their index in other places
+            var firstHats = customization.hats.Take(newHatStartIndex).ToArray();
+            customization.hats = firstHats.Concat(newHatOptions).Concat(excessHats).ToArray();
+        }
+
+        //Logger.LogDebug("Done.");
+
+        Logger.LogDebug($"Completed adding hats to PassportManager, CharacterCustomization, and Customization starting at slot #{newHatStartIndex}.");
     }
 
 
@@ -269,9 +280,11 @@ internal static class BobaHatsPatches
 
         var hat = hats[player.customizationData.currentHat];
         var name = hat?.name ?? "";
-        binarySerializer.WriteString(name, Encoding.UTF8);
+        //var json = new JObject(new {hat = name}).ToString(Formatting.None);
+        var json = JsonConvert.SerializeObject(new { hat = name }, Formatting.None);
+        binarySerializer.WriteString(json, Encoding.UTF8);
 
-        Logger.LogDebug($"Attempting to serialize hat for player #{actorNumber}: '{name}'");
+        Logger.LogDebug($"Serialized hat for player #{actorNumber}: '{name}'");
     }
 
     private static Character? GetCharacterByActorNumber(int actorNumber)
@@ -316,7 +329,11 @@ internal static class BobaHatsPatches
         }
 
         // hat name
-        var name = binaryDeserializer.ReadString(Encoding.UTF8);
+        var json = binaryDeserializer.ReadString(Encoding.UTF8);
+        using var stringReader = new StringReader(json);
+        using var jsonTextReader = new JsonTextReader(stringReader);
+        var jObj = (JObject)JToken.ReadFrom(jsonTextReader);
+        var name = jObj["hat"]?.ToString() ?? string.Empty;
         if (string.IsNullOrEmpty(name))
         {
             Logger.LogError("Hat name is null or empty, cannot set hat.");
@@ -341,113 +358,12 @@ internal static class BobaHatsPatches
 
         var newHatIndex = Array.FindIndex(hats, hat => hat.name == name);
         if (newHatIndex >= 0)
+        {
             __instance.Data.customizationData.currentHat = newHatIndex;
+            Logger.LogDebug($"Deserialized hat for player #{__instance.ActorNumber} to '{name}'");
+        }
         else
-            Logger.LogError($"Hat '{name}' not found in customization hats, cannot set hat for player {__instance.ActorNumber}.");
-    }
-
-    [HarmonyPatch(typeof(PassportManager), nameof(PassportManager.SetOption))]
-    [HarmonyPostfix]
-    public static void PassportManagerSetOptionPostfix(PassportManager __instance, CustomizationOption option, int index)
-    {
-        Logger.LogDebug($"CustomizationOption: {option.name} {option.type} {option.texture} {option.color} #{index}");
-
-        var customization = GetCustomizationSingleton();
-        if (customization == null)
-        {
-            Logger.LogError("Customization component not found, cannot validate options.");
-            return;
-        }
-
-        switch (option.type)
-        {
-            case Customization.Type.Skin:
-                var skin = customization.skins[index];
-                //Logger.LogDebug($"Skin #{index}: {skin.name} {skin.texture} {skin.color}");
-                break;
-            case Customization.Type.Eyes:
-                var eyes = customization.eyes[index];
-                //Logger.LogDebug($"Eyes #{index}: {eyes.name} {eyes.texture} {eyes.color}");
-                break;
-            case Customization.Type.Mouth:
-                var mouth = customization.mouths[index];
-                //Logger.LogDebug($"Mouth #{index}: {mouth.name} {mouth.texture} {mouth.color}");
-                break;
-            case Customization.Type.Accessory:
-                var accessory = customization.accessories[index];
-                //Logger.LogDebug($"Accessory #{index}: {accessory.name} {accessory.texture} {accessory.color}");
-                break;
-            case Customization.Type.Fit:
-                var fit = customization.fits[index];
-                //Logger.LogDebug($"Fit #{index}: {fit.name} {fit.texture} {fit.color}");
-                break;
-            case Customization.Type.Hat:
-                var hat = customization.hats[index];
-                //Logger.LogDebug($"Hat #{index}: {hat.name} {hat.texture} {hat.color}");
-                var dummy = PassportManager.instance.dummy;
-                var character = GetLocalCharacter();
-                if (character == null)
-                {
-                    Logger.LogError("Character is null, cannot validate hats.");
-                    return;
-                }
-
-                var charCustomization = character.refs.customization;
-                ref var customizationHats = ref charCustomization.refs.playerHats;
-                ref var dummyHats = ref dummy.refs.playerHats;
-                if (customizationHats.Length != dummyHats.Length)
-                {
-                    // pad out whichever side is shorter
-                    var diff = customizationHats.Length - dummyHats.Length;
-                    if (diff > 0)
-                    {
-                        // customization has more hats
-                        Logger.LogError($"Customization has {customizationHats.Length} hats, dummy has {dummyHats.Length} hats. Padding dummy hats with nulls.");
-                        dummyHats = dummyHats.Concat(Enumerable.Repeat<Renderer>(null!, diff)).ToArray();
-                    }
-                    else
-                    {
-                        // dummy has more hats
-                        Logger.LogError($"Dummy has {dummyHats.Length} hats, customization has {customizationHats.Length} hats. Padding customization hats with nulls.");
-                        customizationHats = customizationHats.Concat(Enumerable.Repeat<Renderer>(null!, -diff)).ToArray();
-                    }
-                }
-
-                // find hats with the same name in customization and dummy hats with different indices
-                var mismatchedHats = new List<(string, int, int)>();
-                for (var i = 0; i < customizationHats.Length; i++)
-                {
-                    var customizationHat = customizationHats[i];
-                    if (customizationHat == null) continue;
-
-                    for (var j = 0; j < dummyHats.Length; j++)
-                    {
-                        var dummyHat = dummyHats[j];
-                        if (dummyHat == null) continue;
-
-                        if (customizationHat.name == dummyHat.name && i != j)
-                        {
-                            mismatchedHats.Add((customizationHat.name, i, j));
-                            break;
-                        }
-                    }
-                }
-
-                // report mismatched hats
-                if (mismatchedHats.Count > 0)
-                {
-                    Logger.LogError($"Found {mismatchedHats.Count} mismatched hats:");
-                    foreach (var (hatName, customIndex, dummyIndex) in mismatchedHats)
-                    {
-                        Logger.LogError($"- Hat '{hatName}' at index #{customIndex} does not match passport dummy index #{dummyIndex}");
-                    }
-                }
-
-                break;
-            default:
-                //Logger.LogWarning($"Unknown CustomizationOption type: {option.type}");
-                break;
-        }
+            Logger.LogError($"Hat '{name}' not found in customization hats, cannot set hat for player #{__instance.ActorNumber}");
     }
 
     private static Customization GetCustomizationSingleton()
