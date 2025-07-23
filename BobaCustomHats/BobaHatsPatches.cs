@@ -206,52 +206,52 @@ internal static class BobaHatsPatches
 
     [HarmonyPatch(typeof(SyncPersistentPlayerDataPackage), nameof(SyncPersistentPlayerDataPackage.SerializeData))]
     [HarmonyPostfix]
-    public static void SyncPersistentPlayerDataPackageSerializeData(SyncPersistentPlayerDataPackage __instance, BinarySerializer serializer)
+    public static void SyncPersistentPlayerDataPackageSerializeData(SyncPersistentPlayerDataPackage __instance, BinarySerializer binarySerializer)
     {
         // spacers
-        serializer.WriteInt(0);
-        serializer.WriteInt(0);
-        serializer.WriteInt(0);
-        serializer.WriteInt(0);
+        binarySerializer.WriteInt(0);
+        binarySerializer.WriteInt(0);
+        binarySerializer.WriteInt(0);
+        binarySerializer.WriteInt(0);
         // hat name
         var playerDataSvc = GameHandler.GetService<PersistentPlayerDataService>();
         var player = playerDataSvc.PersistentPlayerDatas[__instance.ActorNumber];
         var hat = Character.localCharacter.refs.customization.refs.playerHats[player.customizationData.currentHat];
         var name = hat?.name ?? "";
-        serializer.WriteString(name, Encoding.UTF8);
+        binarySerializer.WriteString(name, Encoding.UTF8);
     }
 
     [HarmonyPatch(typeof(SyncPersistentPlayerDataPackage), nameof(SyncPersistentPlayerDataPackage.DeserializeData))]
     [HarmonyPostfix]
-    public static void SyncPersistentPlayerDataPackageDeserializeData(SyncPersistentPlayerDataPackage __instance, BinaryDeserializer deserializer)
+    public static void SyncPersistentPlayerDataPackageDeserializeData(SyncPersistentPlayerDataPackage __instance, BinaryDeserializer binaryDeserializer)
     {
         // spacers
-        var spacer = deserializer.ReadInt();
+        var spacer = binaryDeserializer.ReadInt();
         if (spacer != 0)
         {
             Logger.LogError($"Missing 1st spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
-        spacer = deserializer.ReadInt();
+        spacer = binaryDeserializer.ReadInt();
         if (spacer != 0)
         {
             Logger.LogError($"Missing 2nd spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
-        spacer = deserializer.ReadInt();
+        spacer = binaryDeserializer.ReadInt();
         if (spacer != 0)
         {
             Logger.LogError($"Missing 3rd spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
-        spacer = deserializer.ReadInt();
+        spacer = binaryDeserializer.ReadInt();
         if (spacer != 0)
         {
             Logger.LogError($"Missing 4th spacer trailer in SyncPersistentPlayerDataPackage.DeserializeData.");
             return;
         }
         // hat name
-        var name = deserializer.ReadString(Encoding.UTF8);
+        var name = binaryDeserializer.ReadString(Encoding.UTF8);
         var playerDataSvc = GameHandler.GetService<PersistentPlayerDataService>();
         ref var hatIndex = ref playerDataSvc.PersistentPlayerDatas[__instance.ActorNumber].customizationData.currentHat;
         var hats = Character.localCharacter.refs.customization.refs.playerHats;
