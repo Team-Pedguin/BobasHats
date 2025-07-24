@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
+//using System.Text;
 using BepInEx.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Photon.Pun;
+//using Newtonsoft.Json;
+//using Newtonsoft.Json.Linq;
+//using Photon.Pun;
 using Zorro.Core;
-using Zorro.Core.Serizalization;
+//using Zorro.Core.Serizalization;
 using Object = UnityEngine.Object;
 
 namespace BobaHats;
@@ -135,8 +135,7 @@ internal static class BobaHatsPatches
             newPlayerDummyHats.Add(renderer);
         }
 
-        /*
-        if (customizationHats.Length != dummyHats.Length)
+        /*if (customizationHats.Length != dummyHats.Length)
         {
             // pad out whichever side is shorter
             var diff = customizationHats.Length - dummyHats.Length;
@@ -160,9 +159,9 @@ internal static class BobaHatsPatches
                     break;
                 }
             }
-        }
+        }*/
         
-        var newHatStartIndex = customizationHats.Length;*/
+        //var newHatStartIndex = customizationHats.Length;
         customizationHats = customizationHats.Concat(newPlayerWorldHats).ToArray();
         dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
 
@@ -181,8 +180,8 @@ internal static class BobaHatsPatches
                 Logger.LogError($"Customization hat '{customizationHat.name}' does not match dummy hat '{dummyHat.name}' at index #{i}");
         }*/
 
-        var customization = GetCustomizationSingleton();
-        CustomizationOption[]? excessHats = null;
+        //var customization = GetCustomizationSingleton();
+        //CustomizationOption[]? excessHats = null;
         /*var hatStartIndex = customization.hats.Length;
         if (hatStartIndex < newHatStartIndex)
         {
@@ -219,19 +218,6 @@ internal static class BobaHatsPatches
 
             newHatOptions.Add(hatOption);
         }
-
-        /*if (excessHats == null)
-        {
-            customization.hats = customization.hats.Concat(newHatOptions).ToArray();
-        }
-        else
-        {
-            // insert hats in sync with their index in other places
-            var firstHats = customization.hats.Take(newHatStartIndex).ToArray();
-            customization.hats = firstHats.Concat(newHatOptions).Concat(excessHats).ToArray();
-        }*/
-
-        customization.hats = customization.hats.Concat(newHatOptions).ToArray();
 
         //Logger.LogDebug($"Completed adding hats to PassportManager, CharacterCustomization, and Customization starting at slot #{newHatStartIndex}.");
         
@@ -297,7 +283,6 @@ internal static class BobaHatsPatches
     */
 
     /*
-     
      private static Character? GetCharacterByActorNumber(int actorNumber)
     {
         return Character.AllCharacters.FirstOrDefault(ch
@@ -382,11 +367,11 @@ internal static class BobaHatsPatches
     }
     */
 
-    private static Customization GetCustomizationSingleton()
+    /*private static Customization GetCustomizationSingleton()
     {
         return Customization.Instance
                ?? throw new InvalidOperationException("Global Customization singleton not found!");
-    }
+    }*/
 
     /*
      private static Character? GetLocalCharacter()
