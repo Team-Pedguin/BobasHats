@@ -18,6 +18,12 @@ internal static class BobaHatsPatches
     private static bool initialized = false;
 
 
+    private static Customization GetCustomizationSingleton()
+    {
+        return Customization.Instance
+               ?? throw new InvalidOperationException("Global Customization singleton not found!");
+    }
+
     [HarmonyPatch(typeof(CharacterCustomization), "Awake")]
     [HarmonyPostfix]
     public static void CharacterCustomizationAwakePostfix(CharacterCustomization __instance)
@@ -180,7 +186,7 @@ internal static class BobaHatsPatches
                 Logger.LogError($"Customization hat '{customizationHat.name}' does not match dummy hat '{dummyHat.name}' at index #{i}");
         }*/
 
-        //var customization = GetCustomizationSingleton();
+        var customization = GetCustomizationSingleton();
         //CustomizationOption[]? excessHats = null;
         /*var hatStartIndex = customization.hats.Length;
         if (hatStartIndex < newHatStartIndex)
@@ -218,6 +224,8 @@ internal static class BobaHatsPatches
 
             newHatOptions.Add(hatOption);
         }
+
+        customization.hats = customization.hats.Concat(newHatOptions).ToArray();
 
         //Logger.LogDebug($"Completed adding hats to PassportManager, CharacterCustomization, and Customization starting at slot #{newHatStartIndex}.");
         
@@ -366,12 +374,6 @@ internal static class BobaHatsPatches
         }
     }
     */
-
-    /*private static Customization GetCustomizationSingleton()
-    {
-        return Customization.Instance
-               ?? throw new InvalidOperationException("Global Customization singleton not found!");
-    }*/
 
     /*
      private static Character? GetLocalCharacter()
