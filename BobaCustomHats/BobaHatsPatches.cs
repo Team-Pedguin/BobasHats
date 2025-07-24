@@ -29,6 +29,7 @@ internal static class BobaHatsPatches
     public static void CharacterCustomizationAwakePostfix(CharacterCustomization __instance)
     {
         if (initialized) return;
+        initialized = true;
         
         if (Plugin.Instance?.Hats == null || Plugin.Instance.Hats.Length == 0)
         {
