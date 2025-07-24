@@ -60,6 +60,7 @@
     
     <ItemGroup>
         <Publicize Include="Assembly-CSharp" />
+        <Publicize Include="Zorro.Core.Runtime" />
     </ItemGroup>
 
     <PropertyGroup>
