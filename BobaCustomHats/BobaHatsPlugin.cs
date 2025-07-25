@@ -26,6 +26,9 @@ public class Plugin : BaseUnityPlugin
     [NonSerialized]
     public HashSet<string>? HatNames;
 
+    [NonSerialized]
+    public int FirstHatIndex;
+
     public void Awake()
     {
         Instance = this;
@@ -147,8 +150,14 @@ public class Plugin : BaseUnityPlugin
             Logger.LogError("Customization component not instantiated yet!");
             return;
         }
+        
+        if (customization.hats == null || customization.hats.Length == 0)
+        {
+            Logger.LogError("CustomizationOptions.hats is not populated yet, not adding hats!");
+            return;
+        }
 
-        if (!customization.hats.Any(x => HatNames.Contains(x.name)))
+        if (!customization.hats.Skip(FirstHatIndex).Any(x => HatNames.Contains(x.name)))
         {
             Logger.LogDebug("Adding hat CustomizationOptions.");
 
@@ -165,6 +174,7 @@ public class Plugin : BaseUnityPlugin
                 newHatOptions.Add(hatOption);
             }
 
+            FirstHatIndex = customization.hats.Length;
             customization.hats = customization.hats.Concat(newHatOptions).ToArray();
             Logger.LogDebug($"Completed adding hats to Customization Options.");
         }
@@ -177,8 +187,14 @@ public class Plugin : BaseUnityPlugin
             return;
         }
 
+        if (FirstHatIndex == 0)
+        {
+            Logger.LogError("FirstHatIndex is not set yet, not instantiating hats!");
+            return;
+        }
+
         ref var dummyHats = ref dummy.refs.playerHats;
-        if (!dummyHats.Any(x => HatNames.Contains(x.name)))
+        if (!dummyHats.Skip(FirstHatIndex).Any(x => HatNames.Contains(x.name)))
         {
             var firstDummyHat = dummyHats.FirstOrDefault();
 
@@ -227,7 +243,8 @@ public class Plugin : BaseUnityPlugin
                 newPlayerDummyHats.Add(renderer);
             }
 
-            dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
+            ArrayInsert(ref dummyHats, FirstHatIndex, newPlayerDummyHats);
+            //dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
             Logger.LogDebug($"Completed adding hats to Passport dummy.");
         }
 
@@ -243,6 +260,36 @@ public class Plugin : BaseUnityPlugin
         }
     }
 
+    private static void ArrayInsert<T>(ref T[]? array, int insertIndex, IReadOnlyList<T> newPlayerDummyHats)
+    {
+        if (array == null || array.Length == 0)
+        {
+            array = newPlayerDummyHats.ToArray();
+            return;
+        }
+
+        var newArray = new T[array.Length + newPlayerDummyHats.Count];
+        if (insertIndex == array.Length)
+        {
+            // append
+            array.CopyTo(newArray, 0);
+            for(var i = 0; i < newPlayerDummyHats.Count; i++)
+                newArray[i+insertIndex] = newPlayerDummyHats[i];
+        }
+        else
+        {
+            // insert
+            Array.Copy(array, 0, newArray, 0, insertIndex);
+            for (var i = 0; i < newPlayerDummyHats.Count; i++)
+                newArray[i + insertIndex] = newPlayerDummyHats[i];
+            var extraIndex = insertIndex + newPlayerDummyHats.Count;
+            var extraLength = array.Length - insertIndex;
+            Array.Copy(array, insertIndex, newArray, extraIndex, extraLength);
+        }
+
+        array = newArray;
+    }
+
     private void AddHatsForCharacter(Character? character)
     {
         var plugin = Instance;
@@ -250,6 +297,12 @@ public class Plugin : BaseUnityPlugin
         {
             Logger.LogError("Plugin instance or hats not loaded yet, cannot instantiate hats!");
             return; // Plugin instance not loaded yet, cannot instantiate hats
+        }
+
+        if (FirstHatIndex == 0)
+        {
+            Logger.LogError("FirstHatIndex is not set yet, not instantiating hats!");
+            return;
         }
 
         if (character == null)
@@ -264,19 +317,22 @@ public class Plugin : BaseUnityPlugin
             Logger.LogError($"Character #{character.photonView.Owner.ActorNumber} '{character.name}' is missing refs!");
             return;
         }
+
         var charCustomization = characterRefs.customization;
         if (charCustomization == null)
         {
             Logger.LogError($"Character #{character.photonView.Owner.ActorNumber} '{character.name}' is missing a customization component!");
             return;
         }
+
         ref var customizationHats = ref charCustomization.refs.playerHats;
         if (customizationHats == null)
         {
             Logger.LogError($"Character #{character.photonView.Owner.ActorNumber} '{character.name}' is missing hats on the customization component!");
             return;
         }
-        if (customizationHats.Any(x => HatNames.Contains(x.name)))
+
+        if (customizationHats.Skip(FirstHatIndex).Any(x => HatNames.Contains(x.name)))
         {
             Logger.LogDebug($"Character #{character.photonView.Owner.ActorNumber} '{character.name}' already has hats, skipping.");
             return;
@@ -331,7 +387,8 @@ public class Plugin : BaseUnityPlugin
             newPlayerWorldHats.Add(renderer);
         }
 
-        customizationHats = customizationHats.Concat(newPlayerWorldHats).ToArray();
+        //customizationHats = customizationHats.Concat(newPlayerWorldHats).ToArray();
+        ArrayInsert(ref customizationHats!, FirstHatIndex, newPlayerWorldHats);
         Logger.LogDebug($"Completed adding hats to Character #{character.photonView.Owner.ActorNumber} '{character.name}'");
     }
 
@@ -378,10 +435,9 @@ public class Plugin : BaseUnityPlugin
         foreach (var plugin in Resources.FindObjectsOfTypeAll<BaseUnityPlugin>())
         {
             var t = plugin.GetType();
-            var method = t.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-                .Where(m => m.Name == message && m is MethodInfo mi && HasCompatibleParameters(mi, args))
-                .Cast<MethodInfo>()
-                .FirstOrDefault();
+            var method = (MethodInfo)
+                t.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                    .FirstOrDefault(m => m.Name == message && m is MethodInfo mi && HasCompatibleParameters(mi, args))!;
             if (method == null) continue;
             myPlugin?.Logger.LogDebug($"Calling {method.Name} on plugin {t.FullName}");
             method.Invoke(method.IsStatic ? null : plugin, args);
@@ -399,16 +455,17 @@ public class Plugin : BaseUnityPlugin
             if (!IsCompatibleParameter(p.ParameterType, args[i]))
                 return false;
         }
+
         return true;
     }
-    
+
     private static bool IsCompatibleParameter(Type paramType, object? arg)
     {
         if (arg == null)
             return !paramType.IsValueType || Nullable.GetUnderlyingType(paramType) != null;
         return paramType.IsInstanceOfType(arg)
                || (paramType.IsGenericType
-                   && paramType.GetGenericTypeDefinition() == typeof(Nullable<>) 
+                   && paramType.GetGenericTypeDefinition() == typeof(Nullable<>)
                    && Nullable.GetUnderlyingType(paramType)!.IsInstanceOfType(arg));
     }
 }
