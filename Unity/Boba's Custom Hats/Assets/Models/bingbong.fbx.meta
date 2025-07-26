@@ -8,7 +8,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: bingbong_mat
-    second: {fileID: 2100000, guid: 710da48fc7efb5e4d99ff50b642764c1, type: 2}
+    second: {fileID: 2100000, guid: bb1908ab3dd832749b3a3313b4c5681a, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
