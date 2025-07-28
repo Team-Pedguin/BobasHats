@@ -19,8 +19,8 @@
 	"optionalDependencies":[],
 	"versionNumber":{
 		"major":1,
-		"minor":0,
-		"patch":10
+		"minor":1,
+		"patch":0
 	},
 	"enabled":true,
 	"icon":"icon.png"
