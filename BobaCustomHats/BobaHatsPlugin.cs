@@ -14,7 +14,7 @@ namespace BobaHats;
 public class Plugin : BaseUnityPlugin
 #pragma warning restore BepInEx002
 {
-    private static readonly Lazy<Shader> LazyCharacterShader = new(Shader.Find("W/Character"));
+    private static readonly Lazy<Shader> LazyCharacterShader = new(() => Shader.Find("W/Character"));
     public static Shader CharacterShader => LazyCharacterShader.Value;
     internal new ManualLogSource Logger => base.Logger;
 
@@ -27,7 +27,7 @@ public class Plugin : BaseUnityPlugin
     public HashSet<string>? HatNames;
 
     [NonSerialized]
-    public int FirstHatIndex;
+    public bool HatsInserted;
 
     public void Awake()
     {
@@ -150,14 +150,14 @@ public class Plugin : BaseUnityPlugin
             Logger.LogError("Customization component not instantiated yet!");
             return;
         }
-        
+
         if (customization.hats == null || customization.hats.Length == 0)
         {
             Logger.LogError("CustomizationOptions.hats is not populated yet, not adding hats!");
             return;
         }
 
-        if (!customization.hats.Skip(FirstHatIndex).Any(x => HatNames.Contains(x.name)))
+        if (!customization.hats.Skip(18).Any(x => HatNames.Contains(x.name)))
         {
             Logger.LogDebug("Adding hat CustomizationOptions.");
 
@@ -174,8 +174,9 @@ public class Plugin : BaseUnityPlugin
                 newHatOptions.Add(hatOption);
             }
 
-            FirstHatIndex = customization.hats.Length;
-            customization.hats = customization.hats.Concat(newHatOptions).ToArray();
+            HatsInserted = true;
+            //customization.hats = customization.hats.Concat(newHatOptions).ToArray();
+            ArrayInsert(ref customization.hats, 18, newHatOptions);
             Logger.LogDebug($"Completed adding hats to Customization Options.");
         }
 
@@ -187,14 +188,14 @@ public class Plugin : BaseUnityPlugin
             return;
         }
 
-        if (FirstHatIndex == 0)
+        if (!HatsInserted)
         {
-            Logger.LogError("FirstHatIndex is not set yet, not instantiating hats!");
+            Logger.LogError("HatsInserted is not set yet, not instantiating hats!");
             return;
         }
 
         ref var dummyHats = ref dummy.refs.playerHats;
-        if (!dummyHats.Skip(FirstHatIndex).Any(x => HatNames.Contains(x.name)))
+        if (!dummyHats.Skip(18).Any(x => HatNames.Contains(x.name)))
         {
             var firstDummyHat = dummyHats.FirstOrDefault();
 
@@ -243,8 +244,8 @@ public class Plugin : BaseUnityPlugin
                 newPlayerDummyHats.Add(renderer);
             }
 
-            ArrayInsert(ref dummyHats, FirstHatIndex, newPlayerDummyHats);
             //dummyHats = dummyHats.Concat(newPlayerDummyHats).ToArray();
+            ArrayInsert(ref dummyHats!, 18, newPlayerDummyHats);
             Logger.LogDebug($"Completed adding hats to Passport dummy.");
         }
 
@@ -260,32 +261,57 @@ public class Plugin : BaseUnityPlugin
         }
     }
 
-    private static void ArrayInsert<T>(ref T[]? array, int insertIndex, IReadOnlyList<T> newPlayerDummyHats)
+    private static void ArrayInsert<T>(ref T[]? array, int insertIndex, IReadOnlyList<T>? toAdd)
     {
+        if (toAdd == null || toAdd.Count == 0)
+            return;
+
         if (array == null || array.Length == 0)
         {
-            array = newPlayerDummyHats.ToArray();
+            array = toAdd.ToArray();
             return;
         }
 
-        var newArray = new T[array.Length + newPlayerDummyHats.Count];
+        if (insertIndex < 0 || insertIndex > array.Length)
+            throw new ArgumentOutOfRangeException(nameof(insertIndex), $"Insert index ({insertIndex}) is out of bounds.");
+
+        var newArray = new T[array.Length + toAdd.Count];
         if (insertIndex == array.Length)
         {
             // append
             array.CopyTo(newArray, 0);
-            for(var i = 0; i < newPlayerDummyHats.Count; i++)
-                newArray[i+insertIndex] = newPlayerDummyHats[i];
+            for (var i = 0; i < toAdd.Count; i++)
+                newArray[i + insertIndex] = toAdd[i];
         }
         else
         {
             // insert
             Array.Copy(array, 0, newArray, 0, insertIndex);
-            for (var i = 0; i < newPlayerDummyHats.Count; i++)
-                newArray[i + insertIndex] = newPlayerDummyHats[i];
-            var extraIndex = insertIndex + newPlayerDummyHats.Count;
+            for (var i = 0; i < toAdd.Count; i++)
+                newArray[i + insertIndex] = toAdd[i];
+            var extraIndex = insertIndex + toAdd.Count;
             var extraLength = array.Length - insertIndex;
             Array.Copy(array, insertIndex, newArray, extraIndex, extraLength);
         }
+
+        array = newArray;
+    }
+
+    private static void ArrayAppend<T>(ref T[]? array, IReadOnlyList<T>? toAdd)
+    {
+        if (toAdd == null || toAdd.Count == 0)
+            return;
+
+        if (array == null || array.Length == 0)
+        {
+            array = toAdd.ToArray();
+            return;
+        }
+
+        var newArray = new T[array.Length + toAdd.Count];
+        array.CopyTo(newArray, 0);
+        for (var i = 0; i < toAdd.Count; i++)
+            newArray[i + array.Length] = toAdd[i];
 
         array = newArray;
     }
@@ -299,9 +325,9 @@ public class Plugin : BaseUnityPlugin
             return; // Plugin instance not loaded yet, cannot instantiate hats
         }
 
-        if (FirstHatIndex == 0)
+        if (!HatsInserted)
         {
-            Logger.LogError("FirstHatIndex is not set yet, not instantiating hats!");
+            Logger.LogError("HatsInserted is not set yet, not instantiating hats!");
             return;
         }
 
@@ -332,7 +358,7 @@ public class Plugin : BaseUnityPlugin
             return;
         }
 
-        if (customizationHats.Skip(FirstHatIndex).Any(x => HatNames.Contains(x.name)))
+        if (customizationHats.Skip(18).Any(x => HatNames.Contains(x.name)))
         {
             Logger.LogDebug($"Character #{character.photonView.Owner.ActorNumber} '{character.name}' already has hats, skipping.");
             return;
@@ -388,7 +414,7 @@ public class Plugin : BaseUnityPlugin
         }
 
         //customizationHats = customizationHats.Concat(newPlayerWorldHats).ToArray();
-        ArrayInsert(ref customizationHats!, FirstHatIndex, newPlayerWorldHats);
+        ArrayInsert(ref customizationHats!, 18, newPlayerWorldHats);
         Logger.LogDebug($"Completed adding hats to Character #{character.photonView.Owner.ActorNumber} '{character.name}'");
     }
 
