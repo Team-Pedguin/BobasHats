@@ -3,16 +3,22 @@
 
 This guide will help you share your mod profile using the Thunderstore Mod Manager!
 
-1. Open Thunderstore Mod Manager
-2. Look for **PEAK** in the list. Click on **Select Game** once you see it.
-3. Click in a profile you want and hit **Select Profile**.
-4. Prepare the mods you want.
-5. Once you're ready to share your mod list, click on **Settings** and then go to the **Profile** tab. 
-6. Look for the option **Export Profile As A Code** and click on it. 
-7. You will be given a code to share using copy and paste!
+1. Open Thunderstore Mod Manager and search for **PEAK** in the game list.
+   <br/><img src="profile-share-guide\image1.png" width="420px"><br/>
+2. Click on **Select Game** once you find it in the game list.
+   <br/><img src="profile-share-guide\image2.png" width="420px"><br/>
+3. Click on a profile you want (ie. Default) and then hit **Select Profile**.
+   <br/><img src="profile-share-guide\image3.png" width="420px"><br/>
+4. **Confirm the mods listed are the ones you want to share!**
+5. Once you're ready to share your mod list, click on **Share** at the top!
+   <br/><img src="profile-share-guide\image4.png" width="420px"><br/>
+6. You will be given a code to share using your clipboard via **Paste** (Ctrl+V)!
+   <br/><img src="profile-share-guide\image5.png" width="420px"><br/>
 
 # Bug Reporting
 
-If you want to report a bug or suggest an improvement on Boba's Hats, please use [GitHub Issues](https://github.com/Team-Pedguin/BobasHats/issues)!
+If you want to report a bug or suggest an improvement on Boba's Hats,
+please use [GitHub Issues](https://github.com/Team-Pedguin/BobasHats/issues)!
 
-Include your profile code in the issue description so we can reproduce any mod conflict issues!
+Be sure to include your profile code in the issue description so we can reproduce
+any mod conflict issues!
