@@ -270,4 +270,91 @@ internal static class BobaHatsPatches
         Logger.LogDebug($"PlayerHandler.RegisterCharacter called for {character.characterName} ({character.photonView.ViewID})");
         Plugin.BroadcastPluginEvent(nameof(Plugin.OnAddHatsForCharacter), character);
     }
+
+    [HarmonyPatch(typeof(CharacterCustomization), nameof(CharacterCustomization.Start))]
+    [HarmonyPrefix]
+    public static void CharacterCustomizationStartPrefix(CharacterCustomization __instance)
+    {
+        Logger.LogDebug($"CharacterCustomization.Start called");
+        Plugin.BroadcastPluginEvent(nameof(Plugin.OnLoadHats));
+        var character = __instance._character;
+        if (character == null) return;
+        Plugin.BroadcastPluginEvent(nameof(Plugin.OnAddHatsForCharacter), character);
+    }
+
+    [HarmonyPatch(typeof(PlayerCustomizationDummy), nameof(PlayerCustomizationDummy.UpdateDummy))]
+    [HarmonyPrefix]
+    public static void PlayerCustomizationDummyUpdateDummyPrefix(PlayerCustomizationDummy __instance)
+    {
+        Logger.LogDebug($"PlayerCustomizationDummy.UpdateDummy called");
+
+        Plugin.BroadcastPluginEvent(nameof(Plugin.OnLoadHats));
+        var character = Character.localCharacter;
+        if (character != null)
+            Plugin.BroadcastPluginEvent(nameof(Plugin.OnAddHatsForCharacter), character);
+
+        var pds = GameHandler.GetService<PersistentPlayerDataService>();
+        var changedPlayerData = false;
+        var customization = Plugin.GetCustomizationSingleton();
+        if (customization != null)
+        {
+            var playerData = pds.GetPlayerData(PhotonNetwork.LocalPlayer);
+            var customizationData = playerData.customizationData;
+
+            if (customizationData.currentSkin < 0 || customizationData.currentSkin > customization.skins.Length)
+            {
+                customizationData.currentSkin = 0;
+                changedPlayerData = true;
+            }
+
+            if (customizationData.currentOutfit < 0 || customizationData.currentOutfit > customization.fits.Length)
+            {
+                customizationData.currentOutfit = 0;
+                changedPlayerData = true;
+            }
+
+            if (customizationData.currentHat < 0 || customizationData.currentHat > customization.hats.Length)
+            {
+                customizationData.currentHat = 0;
+                changedPlayerData = true;
+            }
+
+            if (customizationData.currentEyes < 0 || customizationData.currentEyes > customization.eyes.Length || customizationData.currentEyes > __instance.refs.EyeRenderers.Length)
+            {
+                customizationData.currentEyes = 0;
+                changedPlayerData = true;
+            }
+
+            if (customizationData.currentAccessory < 0 || customizationData.currentAccessory > customization.accessories.Length)
+            {
+                customizationData.currentAccessory = 0;
+                changedPlayerData = true;
+            }
+
+            if (customizationData.currentMouth < 0 || customizationData.currentMouth > customization.mouths.Length)
+            {
+                customizationData.currentMouth = 0;
+                changedPlayerData = true;
+            }
+
+            if (changedPlayerData)
+                pds.SetPlayerData(PhotonNetwork.LocalPlayer, playerData);
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerCustomizationDummy), nameof(PlayerCustomizationDummy.UpdateDummy))]
+    [HarmonyFinalizer]
+    public static Exception? PlayerCustomizationDummyUpdateDummyFinalizer(PlayerCustomizationDummy __instance, Exception? __exception)
+    {
+        if (__exception == null) return null;
+
+        if (__exception is IndexOutOfRangeException oob)
+        {
+            Logger.LogWarning($"PlayerCustomizationDummy.UpdateDummy threw an exception\n{__exception.GetType().FullName}: {__exception.Message}\n{__exception.StackTrace}");
+            return null;
+        }
+
+
+        return __exception;
+    }
 }
