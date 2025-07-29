@@ -192,6 +192,19 @@ internal static class BobaHatsPatches
         Plugin.BroadcastPluginEvent(nameof(Plugin.OnAddHatsForCharacter), __instance._character);
     }
 
+
+    [HarmonyPatch(typeof(CharacterCustomization), nameof(CharacterCustomization.OnPlayerDataChange))]
+    [HarmonyFinalizer]
+    public static Exception? CharacterCustomizationOnPlayerDataChangeFinalizer(CharacterCustomization __instance, Exception? __exception, PersistentPlayerData playerData)
+    {
+        if (__exception == null)
+            return null;
+
+        Logger.LogWarning($"CharacterCustomization.OnPlayerDataChange threw an exception\n{__exception.GetType().FullName}: {__exception.Message}\n{__exception.StackTrace}");
+        return null;
+    }
+
+
     [HarmonyPatch(typeof(PersistentPlayerDataService), nameof(PersistentPlayerDataService.OnSyncReceived))]
     [HarmonyPostfix]
     public static void PersistentPlayerDataServiceOnSyncReceivedPostfix(PersistentPlayerDataService __instance, SyncPersistentPlayerDataPackage package)
@@ -287,6 +300,11 @@ internal static class BobaHatsPatches
     public static void PlayerCustomizationDummyUpdateDummyPrefix(PlayerCustomizationDummy __instance)
     {
         Logger.LogDebug($"PlayerCustomizationDummy.UpdateDummy patch called");
+        FixPlayerCustomizationData(__instance);
+    }
+
+    private static void FixPlayerCustomizationData(PlayerCustomizationDummy customizationDummy)
+    {
         try
         {
             Plugin.BroadcastPluginEvent(nameof(Plugin.OnLoadHats));
@@ -320,7 +338,7 @@ internal static class BobaHatsPatches
                     changedPlayerData = true;
                 }
 
-                if (customizationData.currentEyes < 0 || customizationData.currentEyes > customization.eyes.Length || customizationData.currentEyes > __instance.refs.EyeRenderers.Length)
+                if (customizationData.currentEyes < 0 || customizationData.currentEyes > customization.eyes.Length || customizationData.currentEyes > customizationDummy.refs.EyeRenderers.Length)
                 {
                     customizationData.currentEyes = 0;
                     changedPlayerData = true;
@@ -341,7 +359,8 @@ internal static class BobaHatsPatches
                 if (changedPlayerData)
                     pds.SetPlayerData(PhotonNetwork.LocalPlayer, playerData);
             }
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Logger.LogError($"PlayerCustomizationDummy.UpdateDummy patch threw an exception\n{ex.GetType().FullName}\n{ex.Message}\n{ex.StackTrace}");
         }
