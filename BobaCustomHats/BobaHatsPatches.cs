@@ -286,59 +286,64 @@ internal static class BobaHatsPatches
     [HarmonyPrefix]
     public static void PlayerCustomizationDummyUpdateDummyPrefix(PlayerCustomizationDummy __instance)
     {
-        Logger.LogDebug($"PlayerCustomizationDummy.UpdateDummy called");
-
-        Plugin.BroadcastPluginEvent(nameof(Plugin.OnLoadHats));
-        var character = Character.localCharacter;
-        if (character != null)
-            Plugin.BroadcastPluginEvent(nameof(Plugin.OnAddHatsForCharacter), character);
-
-        var pds = GameHandler.GetService<PersistentPlayerDataService>();
-        var changedPlayerData = false;
-        var customization = Plugin.GetCustomizationSingleton();
-        if (customization != null)
+        Logger.LogDebug($"PlayerCustomizationDummy.UpdateDummy patch called");
+        try
         {
-            var playerData = pds.GetPlayerData(PhotonNetwork.LocalPlayer);
-            var customizationData = playerData.customizationData;
+            Plugin.BroadcastPluginEvent(nameof(Plugin.OnLoadHats));
+            var character = Character.localCharacter;
+            if (character != null)
+                Plugin.BroadcastPluginEvent(nameof(Plugin.OnAddHatsForCharacter), character);
 
-            if (customizationData.currentSkin < 0 || customizationData.currentSkin > customization.skins.Length)
+            var pds = GameHandler.GetService<PersistentPlayerDataService>();
+            var changedPlayerData = false;
+            var customization = Plugin.GetCustomizationSingleton();
+            if (customization != null)
             {
-                customizationData.currentSkin = 0;
-                changedPlayerData = true;
-            }
+                var playerData = pds.GetPlayerData(PhotonNetwork.LocalPlayer);
+                var customizationData = playerData.customizationData;
 
-            if (customizationData.currentOutfit < 0 || customizationData.currentOutfit > customization.fits.Length)
-            {
-                customizationData.currentOutfit = 0;
-                changedPlayerData = true;
-            }
+                if (customizationData.currentSkin < 0 || customizationData.currentSkin > customization.skins.Length)
+                {
+                    customizationData.currentSkin = 0;
+                    changedPlayerData = true;
+                }
 
-            if (customizationData.currentHat < 0 || customizationData.currentHat > customization.hats.Length)
-            {
-                customizationData.currentHat = 0;
-                changedPlayerData = true;
-            }
+                if (customizationData.currentOutfit < 0 || customizationData.currentOutfit > customization.fits.Length)
+                {
+                    customizationData.currentOutfit = 0;
+                    changedPlayerData = true;
+                }
 
-            if (customizationData.currentEyes < 0 || customizationData.currentEyes > customization.eyes.Length || customizationData.currentEyes > __instance.refs.EyeRenderers.Length)
-            {
-                customizationData.currentEyes = 0;
-                changedPlayerData = true;
-            }
+                if (customizationData.currentHat < 0 || customizationData.currentHat > customization.hats.Length)
+                {
+                    customizationData.currentHat = 0;
+                    changedPlayerData = true;
+                }
 
-            if (customizationData.currentAccessory < 0 || customizationData.currentAccessory > customization.accessories.Length)
-            {
-                customizationData.currentAccessory = 0;
-                changedPlayerData = true;
-            }
+                if (customizationData.currentEyes < 0 || customizationData.currentEyes > customization.eyes.Length || customizationData.currentEyes > __instance.refs.EyeRenderers.Length)
+                {
+                    customizationData.currentEyes = 0;
+                    changedPlayerData = true;
+                }
 
-            if (customizationData.currentMouth < 0 || customizationData.currentMouth > customization.mouths.Length)
-            {
-                customizationData.currentMouth = 0;
-                changedPlayerData = true;
-            }
+                if (customizationData.currentAccessory < 0 || customizationData.currentAccessory > customization.accessories.Length)
+                {
+                    customizationData.currentAccessory = 0;
+                    changedPlayerData = true;
+                }
 
-            if (changedPlayerData)
-                pds.SetPlayerData(PhotonNetwork.LocalPlayer, playerData);
+                if (customizationData.currentMouth < 0 || customizationData.currentMouth > customization.mouths.Length)
+                {
+                    customizationData.currentMouth = 0;
+                    changedPlayerData = true;
+                }
+
+                if (changedPlayerData)
+                    pds.SetPlayerData(PhotonNetwork.LocalPlayer, playerData);
+            }
+        } catch (Exception ex)
+        {
+            Logger.LogError($"PlayerCustomizationDummy.UpdateDummy patch threw an exception\n{ex.GetType().FullName}\n{ex.Message}\n{ex.StackTrace}");
         }
     }
 
