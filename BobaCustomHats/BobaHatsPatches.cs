@@ -338,7 +338,7 @@ internal static class BobaHatsPatches
                     changedPlayerData = true;
                 }
 
-                if (customizationData.currentEyes < 0 || customizationData.currentEyes > customization.eyes.Length || customizationData.currentEyes > customizationDummy.refs.EyeRenderers.Length)
+                if (customizationData.currentEyes < 0 || customizationData.currentEyes > customization.eyes.Length) //  || customizationData.currentEyes > customizationDummy.refs.EyeRenderers.Length
                 {
                     customizationData.currentEyes = 0;
                     changedPlayerData = true;
