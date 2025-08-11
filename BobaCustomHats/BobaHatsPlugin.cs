@@ -29,7 +29,7 @@ public class Plugin : BaseUnityPlugin
     [NonSerialized]
     public bool HatsInserted;
 
-    private const int HatInsertIndex = 24;
+    private const int HatInsertIndex = 23;
 
     public void Awake()
     {
